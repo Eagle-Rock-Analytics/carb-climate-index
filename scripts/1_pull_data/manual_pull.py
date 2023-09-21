@@ -9,6 +9,7 @@ Notes:
 
 # Import libraries
 import boto3
+import argparse
 
 # Set AWS credentials
 s3 = boto3.resource('s3')
@@ -37,31 +38,8 @@ def aws_datasource_dirs(domain, datasource):
     return datasource_dir
 
 
-def manual_to_aws():
+def manual_to_aws(domain, datasource, loc):
     """Uploads data that was manually downloaded to AWS bucket"""
-
-    # user input on upload
-    # domain options: built_environment, governance, natural_systems, society_economy, climate_risk
-    domain_resp = input('Which domain to save to? ')
-    if domain_resp == 'built_environment':
-        domain = 'built_environment'
-    elif domain_resp == 'society_economy':
-        domain = 'society_economy'
-    elif domain_resp == 'climate_risk':
-        domain = 'climate_risk'
-    elif domain_resp == 'governance':
-        domain = 'governance'
-    elif domain_resp == 'natural_systems':
-        domain = 'natural_systems'
-    else:
-        print('Please pass a valid domain name')
-
-    data_resp = input('What is the datasource? ')
-    datasource = str(data_resp)
-
-    loc_resp = input('Where is the file stored locally? Please pass the path and filename. ')
-    loc = str(loc_resp)
-
 
     # first check that folder is not already available
     path_to_save = aws_datasource_dirs(domain, datasource)
@@ -83,4 +61,22 @@ def manual_to_aws():
 
 # Run functions
 if __name__ == "__main__":
-    manual_to_aws()
+
+    # Create parser
+    parser = argparse.ArgumentParser(
+        description='Script uploads manually downloaded data to AWS bucket',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    # Define arguments
+    parser.add_argument('domain', help='Options: built_environment, governance, natural_systems, society_economy, climate_risk')
+    parser.add_argument('datasource', help='Organization of datasource')
+    parser.add_argument('loc', help='Local path to filename to upload')
+
+    # Parse out arguments for use
+    args = parser.parse_args()
+    domain = args.domain
+    datasource = args.datasource
+    loc = args.loc
+
+
+    manual_to_aws(domain, datasource, loc)
