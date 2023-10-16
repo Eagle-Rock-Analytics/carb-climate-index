@@ -45,6 +45,7 @@ def manual_to_aws(domain, datasource, loc):
     path_to_save = aws_datasource_dirs(domain, datasource)
 
     # extract the filename from path
+    loc = loc.replace('\\', '/')
     fname = loc.split('/')[-1]
 
     # point to location of file(s) locally and upload to aws
