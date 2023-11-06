@@ -1,2 +1,2 @@
 # carb-climate-index
-Code associated with the CARB California Climate Adaptation Index
+Code associated with the California Climate Risk and Adaptation Index
