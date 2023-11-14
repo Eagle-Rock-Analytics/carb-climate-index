@@ -1,5 +1,8 @@
 from datetime import datetime
 from functools import wraps
+import os
+
+metadata_path = os.path.expanduser('~/metadata/')
 
 def append_metadata(func):
     '''
@@ -16,7 +19,7 @@ def append_metadata(func):
         now = datetime.now()
         datestr = now.strftime("%B %d, %Y")
         varname = kwargs['varname']
-        f = open(varname + "_metadata.txt", "a")
+        f = open(f"{metadata_path}/{varname}_metadata.txt", "a")
         f.write("\n")
         f.write("\n")
         f.write("======== Function(s) applied to " + varname + " ========")
@@ -24,6 +27,7 @@ def append_metadata(func):
         f.write("\n")
         f.write(f"Function name: {func.__name__}")
         f.write("\n")
+        f.write(f"Function description: {func.__doc__}")
         if args:
             f.write(f"Function arguments: {args}")
             f.write("\n")
