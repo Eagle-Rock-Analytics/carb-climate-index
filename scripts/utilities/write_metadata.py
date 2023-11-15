@@ -4,6 +4,43 @@ import os
 
 metadata_path = os.path.expanduser('~/metadata/')
 
+def make_metadata_files(df):
+    """
+    Function to make variable metadata from a csv
+    """
+    varlist = list(df['Variable'].values)
+    for var in varlist:    
+        vardat = df.loc[df['Variable'] == var]
+        meta_dict = vardat.set_index('Variable').to_dict()
+        f = open(
+            f"{metadata_path}/{var}_metadata.txt", "w"
+        )
+        f.write(
+            "========"
+            + " Metadata document "
+            + "prepared for the California "
+            + "Air Resources Board "
+            + "'California Climate Resilience "
+            + "and Adaptation Index'"
+            + " ========") 
+        f.write("\n")
+        f.write("\n")
+        f.write(
+            "Index and all accompanying documentation "
+            + " developed by Eagle Rock Analytics, Inc."
+        )
+        f.write("\n")
+        f.write(f"This document refers to the following variable: {var}")
+        f.write("\n")        
+        for key, val in zip(
+            list(meta_dict.keys()),
+            list(meta_dict.values())
+        ):
+            f.write(f"{key}: {val[var]}")
+            f.write("\n")
+        f.write("Github: https://github.com/Eagle-Rock-Analytics/carb-climate-index")
+        f.close()
+
 def append_metadata(func):
     '''
     Decorator for a given function to pull its name, args, and kwargs
@@ -18,11 +55,11 @@ def append_metadata(func):
         # Write the function parameters to file
         now = datetime.now()
         datestr = now.strftime("%B %d, %Y")
-        varname = kwargs['varname']
-        f = open(f"{metadata_path}/{varname}_metadata.txt", "a")
+        var = kwargs['varname']
+        f = open(f"{metadata_path}/{var}_metadata.txt", "a")
         f.write("\n")
         f.write("\n")
-        f.write("======== Function(s) applied to " + varname + " ========")
+        f.write("======== Function(s) applied to " + var + " ========")
         f.write("\n")
         f.write("\n")
         f.write(f"Function name: {func.__name__}")
@@ -43,3 +80,4 @@ def append_metadata(func):
         f.close()
         return result
     return metadata_generator
+
