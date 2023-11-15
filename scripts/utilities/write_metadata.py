@@ -20,7 +20,7 @@ def make_metadata_files(df):
             + " Metadata document "
             + "prepared for the California "
             + "Air Resources Board "
-            + "'California Climate Resilience "
+            + "'California Climate Risk "
             + "and Adaptation Index'"
             + " ========") 
         f.write("\n")
