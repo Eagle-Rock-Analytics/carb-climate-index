@@ -1,4 +1,3 @@
-
 #Load some library
 import requests
 from bs4 import BeautifulSoup
@@ -56,7 +55,7 @@ def scrape_website(base_url, starting_string, csv_filename, download_dir):
         print(f"An error occurred: {e}")
 
  # Run the function to extract EPA's county level annual air quality data      
-scrape_website('https://aqs.epa.gov/aqsweb/airdata/download_files.html#Annual', 'annual_aqi_by_county_zip', 'annual_aqi_by_county', 'downloaded_data_dir')
+scrape_website('https://aqs.epa.gov/aqsweb/airdata/download_files.html#Annual', 'annual_aqi_by_county', 'annual_aqi_by_county', 'downloaded_data_dir')
 
 # Directory where the CSV files are located
 input_folder = "downloaded_data_dir"
