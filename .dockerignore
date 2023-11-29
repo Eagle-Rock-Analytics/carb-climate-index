@@ -1,0 +1,8 @@
+.dockerignore
+**/*.nc
+**/*.h5
+.git
+.gitignore
+**/*.ipynb
+**/*.ipynb_checkpoints
+**/*.gpkg
