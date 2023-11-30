@@ -6,3 +6,5 @@
 **/*.ipynb
 **/*.ipynb_checkpoints
 **/*.gpkg
+*.log
+**/*.log
