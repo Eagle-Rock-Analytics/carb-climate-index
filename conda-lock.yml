@@ -15,8 +15,8 @@ metadata:
   - url: conda-forge
     used_env_vars: []
   content_hash:
-    linux-64: a002706c2e0a878a8f39cc45c6d5a84c1b73c7454e2c53c54ad069d85b3dc14a
-    osx-64: be2443c9ba50126b59fa89ee3fc70653dc8d36aa7b1917d73a6eed1e6ba147f1
+    linux-64: 0858c87cb649c6dff1b5ed971e260d71ab9f0bb4a1e630d00bd5ed677b19d63c
+    osx-64: 4307ce277ec5847861dde2152ddcd045689065f2d415132fe81c71d43f5599ab
   platforms:
   - linux-64
   - osx-64
@@ -1886,6 +1886,18 @@ package:
   version: '0.4'
 - category: main
   dependencies:
+    python: '>=3.6'
+  hash:
+    md5: a2f2138597905eaa72e561d8efb42cf3
+    sha256: 0c7bb50e1382615a660468dc531b8b17c5b91b88a02ed131c8e3cc63db507ce2
+  manager: conda
+  name: et_xmlfile
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/noarch/et_xmlfile-1.1.0-pyhd8ed1ab_0.conda
+  version: 1.1.0
+- category: main
+  dependencies:
     python: '>=3.7'
   hash:
     md5: f6c211fee3c98229652b60a9a42ef363
@@ -3457,6 +3469,21 @@ package:
   platform: linux-64
   url: https://conda.anaconda.org/conda-forge/noarch/matplotlib-inline-0.1.6-pyhd8ed1ab_0.tar.bz2
   version: 0.1.6
+- category: main
+  dependencies:
+    et_xmlfile: ''
+    libgcc-ng: '>=12'
+    python: '>=3.9,<3.10.0a0'
+    python_abi: 3.9.* *_cp39
+  hash:
+    md5: eb41bdacb73310d6d06b1abf3592b2af
+    sha256: bc310fcfe85bc91ffb4f56db67590ee856c3ab82b7f03a68f4e6d4c90b85355c
+  manager: conda
+  name: openpyxl
+  optional: false
+  platform: linux-64
+  url: https://conda.anaconda.org/conda-forge/linux-64/openpyxl-3.1.2-py39hd1e30aa_1.conda
+  version: 3.1.2
 - category: main
   dependencies:
     python: '>=3.6'
@@ -7349,6 +7376,18 @@ package:
   version: '0.4'
 - category: main
   dependencies:
+    python: '>=3.6'
+  hash:
+    md5: a2f2138597905eaa72e561d8efb42cf3
+    sha256: 0c7bb50e1382615a660468dc531b8b17c5b91b88a02ed131c8e3cc63db507ce2
+  manager: conda
+  name: et_xmlfile
+  optional: false
+  platform: osx-64
+  url: https://conda.anaconda.org/conda-forge/noarch/et_xmlfile-1.1.0-pyhd8ed1ab_0.conda
+  version: 1.1.0
+- category: main
+  dependencies:
     python: '>=3.7'
   hash:
     md5: f6c211fee3c98229652b60a9a42ef363
@@ -8790,6 +8829,20 @@ package:
   platform: osx-64
   url: https://conda.anaconda.org/conda-forge/noarch/matplotlib-inline-0.1.6-pyhd8ed1ab_0.tar.bz2
   version: 0.1.6
+- category: main
+  dependencies:
+    et_xmlfile: ''
+    python: '>=3.9,<3.10.0a0'
+    python_abi: 3.9.* *_cp39
+  hash:
+    md5: 7796a3b4f32a2bf72d2ccdec193c4a33
+    sha256: 14de9129b5c39715f3a49b101f8a5830fae495c49c13a4f6b3625b6c160b75aa
+  manager: conda
+  name: openpyxl
+  optional: false
+  platform: osx-64
+  url: https://conda.anaconda.org/conda-forge/osx-64/openpyxl-3.1.2-py39hdc70f33_1.conda
+  version: 3.1.2
 - category: main
   dependencies:
     python: '>=3.6'
