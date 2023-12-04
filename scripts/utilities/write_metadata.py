@@ -8,6 +8,8 @@ def make_metadata_files(df):
     """
     Function to make variable metadata from a csv
     """
+    now = datetime.now()
+    datestr = now.strftime("%B %d, %Y")
     varlist = list(df['Variable'].values)
     for var in varlist:    
         vardat = df.loc[df['Variable'] == var]
@@ -27,8 +29,12 @@ def make_metadata_files(df):
         f.write("\n")
         f.write(
             "Index and all accompanying documentation "
-            + " developed by Eagle Rock Analytics, Inc."
+            + "developed by Eagle Rock Analytics, Inc."
         )
+        f.write("\n")
+        f.write("Website: https://www.eaglerockanalytics.com")
+        f.write("\n")
+        f.write("Github: https://github.com/Eagle-Rock-Analytics/carb-climate-index")
         f.write("\n")
         f.write(f"This document refers to the following variable: {var}")
         f.write("\n")        
@@ -38,7 +44,12 @@ def make_metadata_files(df):
         ):
             f.write(f"{key}: {val[var]}")
             f.write("\n")
-        f.write("Github: https://github.com/Eagle-Rock-Analytics/carb-climate-index")
+        
+        f.write(
+            "*** As of the making of this document ("+ datestr+"), "
+            +"this work is still in development and "
+            +"may not represent the final data product for ingestion "
+            +"into the California Climate Risk and Adaptation Index. ***")
         f.close()
 
 def append_metadata(func):
