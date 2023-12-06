@@ -50,7 +50,8 @@ def scrape_website(base_url, starting_string, gathered_links, download_dir):
             print('')
 
             # Write the scraped links to a CSV file
-            with open(gathered_links, 'w', newline='') as csv_file:
+            with open('gathered_links.csv', 'w', newline='') as csv_file:
+
                 csv_writer = csv.writer(csv_file)
                 csv_writer.writerow(['Link Text', 'Link Href'])  # Write header row
                 for link in scraped_links:
