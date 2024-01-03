@@ -45,11 +45,13 @@ def scrape_website(base_url, starting_string, gathered_links, download_dir):
                 link_href = link.get('href')
                 if link_href and link_href.startswith(starting_string):
                     scraped_links.append((link_text, link_href))
-            print(f'Data links found, placing into .yml file called: {gathered_links}')
+            print(f'Data links found, placing into .csv file called: {gathered_links}')
+
             print('')
 
             # Write the scraped links to a CSV file
-            with open(gathered_links, 'w', newline='') as csv_file:
+            with open('gathered_links.csv', 'w', newline='') as csv_file:
+
                 csv_writer = csv.writer(csv_file)
                 csv_writer.writerow(['Link Text', 'Link Href'])  # Write header row
                 for link in scraped_links:

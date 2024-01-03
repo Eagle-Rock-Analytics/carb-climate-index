@@ -5,3 +5,4 @@ s3fs
 jupyterlab_execute_time
 census-data-downloader
 rioxarray
+lxml
