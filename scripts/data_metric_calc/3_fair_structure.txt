@@ -1,3 +1,0 @@
-# setting up structure
-# "fair-ification" scripts
-# cleaning data to adhere to FAIR standards

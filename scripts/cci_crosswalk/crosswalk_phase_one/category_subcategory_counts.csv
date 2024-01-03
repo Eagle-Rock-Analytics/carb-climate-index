@@ -1,0 +1,132 @@
+Category,Category_Count,Subcategory,Subcategory_Count,Missing_Count
+Active transportation,24,Bike paths,15,0
+Active transportation,24,Bike share,2,0
+Active transportation,24,Bike and pedestrian improvements,6,0
+Active transportation,24,Multi-use,1,0
+Affordable housing development,101,,0,101
+Air filtration,6,,0,6
+Air monitoring,88,Community air quality,37,0
+Air monitoring,88,Prescribed fire smoke,51,0
+Alternative manure management,116,,0,116
+Alternatives to agricultural burning,3,,0,3
+Anaerobic digestion of dairy manure,118,Dairy,118,0
+Anaerobic digestion of municipal waste,11,Municipal waste,11,0
+Capacity building,19,Community air quality,19,0
+Community Transportation Needs Assessment,24,,0,24
+Community transportation needs assessment,1,,0,1
+Compost production,30,,0,21
+Compost production,30,Community-scale,9,21
+Conservation Easement,2,Agriculture,1,0
+Conservation Easement,2,Forestry,1,0
+Conservation easement,62,Forestry,20,0
+Conservation easement,62,Agriculture,42,0
+Energy efficiency and renewable energy,6390,Residential energy efficiency and weatherization,2175,0
+Energy efficiency and renewable energy,6390,Residential solar,1620,0
+Energy efficiency and renewable energy,6390,"Residential energy efficiency, weatherization, and solar",2501,0
+Energy efficiency and renewable energy,6390,Industrial - food processing,34,0
+Energy efficiency and renewable energy,6390,Community solar,1,0
+Energy efficiency and renewable energy,6390,Commercial solar,45,0
+Energy efficiency and renewable energy,6390,Microgrid,7,0
+Energy efficiency and renewable energy,6390,Residential energy efficiency,7,0
+Fire prevention,296,,0,87
+Fire prevention,296,Fuel Reduction,181,87
+Fire prevention,296,Fuel break,28,87
+Food delivery,1,,0,1
+Food rescue and waste prevention,78,,0,78
+Forest restoration and management,187,Pest control,3,0
+Forest restoration and management,187,Watershed restoration,5,0
+Forest restoration and management,187,Reforestation,35,0
+Forest restoration and management,187,Fuel Reduction,96,0
+Forest restoration and management,187,Landscape health,48,0
+Grant Administration,9,,0,9
+IAE,227,,0,223
+IAE,227,Light-Duty,4,223
+Implementation tracking,2,,0,2
+Improving the energy efficiency of water supply,2,,0,2
+Increasing water and energy efficiency of agricultural irrigation,598,,0,598
+Installing water- and energy-saving appliances,4235,,0,4235
+Interim water delivery,5,,0,5
+Job training and workforce development,430,Wildfire,119,36
+Job training and workforce development,430,Energy-efficiency,241,36
+Job training and workforce development,430,Habitat restoration/erosion,21,36
+Job training and workforce development,430,Forestry,2,36
+Job training and workforce development,430,,0,36
+Job training and workforce development,430,High Road Training Partnerships,11,36
+Maintenance and expansion of drinking water systems,14,,0,14
+Material reuse,4,Wood products,1,3
+Material reuse,4,,0,3
+Outreach and awareness,21,Fire Prevention,20,0
+Outreach and awareness,21,Low carbon transportation,1,0
+Planning,127,Agriculture,19,30
+Planning,127,Estuary,20,30
+Planning,127,Coastal,21,30
+Planning,127,Fire Prevention,21,30
+Planning,127,,0,30
+Planning,127,Watershed,2,30
+Planning,127,Resiliency,1,30
+Planning,127,Meadowlands,3,30
+Planning,127,Wetlands,1,30
+Planning,127,Forest health,1,30
+Planning,127,Local Coastal Plans,1,30
+Planning,127,Forestry,3,30
+Planning,127,Community,1,30
+Planning,127,Water systems,3,30
+Program evaluation,2,Heavy-Duty,1,1
+Program evaluation,2,,0,1
+Recycling,20,Plastic,13,0
+Recycling,20,Fiber,2,0
+Recycling,20,Glass,4,0
+Recycling,20,Paper,1,0
+Refrigerant reductions,19,Industrial - food processing,4,0
+Refrigerant reductions,19,Supermarket,15,0
+"Renewable, low-carbon transportation fuel and infrastructure",95,Feedstock,1,27
+"Renewable, low-carbon transportation fuel and infrastructure",95,Electric vehicle charging infrastructure,62,27
+"Renewable, low-carbon transportation fuel and infrastructure",95,,0,27
+"Renewable, low-carbon transportation fuel and infrastructure",95,RNG production,4,27
+"Renewable, low-carbon transportation fuel and infrastructure",95,Compressed natural gas fueling station,1,27
+Research,53,Forest health,30,6
+Research,53,Dairy,1,6
+Research,53,Resiliency,8,6
+Research,53,Anti-displacement,1,6
+Research,53,,0,6
+Research,53,Natural and working lands,4,6
+Research,53,Transportation,1,6
+Research,53,Energy,2,6
+Shared mobility services,15,Light-Duty,2,13
+Shared mobility services,15,,0,13
+Soil health on-farm field management practices,481,,0,481
+TBD,3,,0,3
+Technical Assistance,1,,0,1
+Technical assistance,66,Application assistance,17,1
+Technical assistance,66,,0,1
+Technical assistance,66,Implementation assistance,3,1
+Technical assistance,66,Capacity building,5,1
+Technical assistance,66,Agriculture,2,1
+Technical assistance,66,Watershed,2,1
+Technical assistance,66,Wetlands,1,1
+Technical assistance,66,Forestry planning,31,1
+Technical assistance,66,Multiple components,1,1
+Technical assistance,66,Forestry,2,1
+Technical assistance,66,Water systems,1,1
+Transit services,762,Operations,483,0
+Transit services,762,Capital,268,0
+Transit services,762,High-speed rail,10,0
+Transit services,762,Transit passes,1,0
+"Urban forestry, greening, and vegetation",708,,0,708
+Urban gardening,1,,0,1
+Wetland restoration and management,25,Wetland,22,1
+Wetland restoration and management,25,Wetlands,1,1
+Wetland restoration and management,25,,0,1
+Wetland restoration and management,25,Coastal,1,1
+Wildfire readiness and emergency preparedness,63,,0,61
+Wildfire readiness and emergency preparedness,63,Forestry,2,61
+Woodstove replacement,1034,,0,1034
+Zero- and near zero-emission vehicles and equipment,103125,Light-Duty,91373,0
+Zero- and near zero-emission vehicles and equipment,103125,Heavy-Duty,4471,0
+Zero- and near zero-emission vehicles and equipment,103125,Off-road,456,0
+Zero- and near zero-emission vehicles and equipment,103125,Heavy-duty,567,0
+Zero- and near zero-emission vehicles and equipment,103125,Agriculture,6094,0
+Zero- and near zero-emission vehicles and equipment,103125,Marine,109,0
+Zero- and near zero-emission vehicles and equipment,103125,Locomotive,24,0
+Zero- and near zero-emission vehicles and equipment,103125,Airport ground support,22,0
+Zero- and near zero-emission vehicles and equipment,103125,Lawn and garden,9,0
