@@ -11,8 +11,6 @@ def to_zarr(ds, top_dir, domain, indicator, data_source, save_name):
     )
     aws_path = "s3://ca-climate-index/"+aws_path
     filepath_zarr = aws_path+save_name+".zarr"
-    import pdb; pdb.set_trace()
-
     # let xarray optimize chunks
     ds = ds.chunk(chunks="auto")
     try:
