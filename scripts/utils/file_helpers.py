@@ -13,10 +13,7 @@ def to_zarr(ds, top_dir, domain, indicator, data_source, save_name):
     filepath_zarr = aws_path+save_name+".zarr"
     # let xarray optimize chunks
     ds = ds.chunk(chunks="auto")
-    try:
-        ds.to_zarr(store=filepath_zarr, mode="w")
-    except:
-        return False
+    ds.to_zarr(store=filepath_zarr, mode="w")
 
 def list_webdir(url, ext=''):
     """Lists objects on a webpage"""
