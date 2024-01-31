@@ -1,25 +1,19 @@
 # Import libraries and functions
 import zarr
-import sys
-import os
 from bs4 import BeautifulSoup
 import requests
 
-sys.path.append(os.path.expanduser('~'))
-from scripts.data_pull.manual_pull import aws_datasource_dirs
-
-def to_zarr(ds, domain, aws_path, save_name):
+def to_zarr(ds, top_dir, domain, indicator, data_source, save_name):
     """Converts netcdf to zarr and sends to s3 bucket"""
     # first check that folder is not already available
-    aws_path = aws_datasource_dirs(domain, datasource=aws_path)
+    aws_path = '{0}/{1}/{2}/{3}/'.format(
+        top_dir, domain, indicator, data_source
+    )
     aws_path = "s3://ca-climate-index/"+aws_path
     filepath_zarr = aws_path+save_name+".zarr"
     # let xarray optimize chunks
     ds = ds.chunk(chunks="auto")
-    try:
-        ds.to_zarr(store=filepath_zarr, mode="w")
-    except:
-        return False
+    ds.to_zarr(store=filepath_zarr, mode="w")
 
 def list_webdir(url, ext=''):
     """Lists objects on a webpage"""
