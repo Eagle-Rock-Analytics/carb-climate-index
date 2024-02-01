@@ -16,7 +16,7 @@ def make_metadata_files(df):
         vardat = df.loc[df['Variable'] == var]
         meta_dict = vardat.set_index('Variable').to_dict()
         file_name = f"{var}_metadata.txt"
-        metadata_path = "3_fair_data/metadata/1_pull/"
+        metadata_path = "3_fair_data/metadata/"
         obj_name = f"{metadata_path}{file_name}"
         f = open(file_name, "w")
         f.write(
