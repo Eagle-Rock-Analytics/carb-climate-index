@@ -65,7 +65,7 @@ def append_metadata(func):
     Note: varname is a required keyword argument, and must be supplied to the function! 
     '''
     def metadata_generator(*args, **kwargs):
-        metadata_path = "3_fair_data/metadata/1_pull/"
+        metadata_path = "3_fair_data/metadata/"
         # Call the function
         result = func(*args, **kwargs)
         # Write the function parameters to file
