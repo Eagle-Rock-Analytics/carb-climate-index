@@ -3,7 +3,6 @@ from functools import wraps
 import os
 import boto3
 s3_client = boto3.client('s3')
-metadata_path = os.path.expanduser('~/metadata/')
 
 def make_metadata_files(df):
     """
