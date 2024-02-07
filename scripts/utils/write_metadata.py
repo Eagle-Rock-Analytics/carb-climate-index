@@ -2,6 +2,7 @@ from datetime import datetime
 from functools import wraps
 import os
 import boto3
+import sys
 s3_client = boto3.client('s3')
 
 def make_metadata_files(df):
@@ -77,6 +78,7 @@ def append_metadata(func):
         s3_client.download_file(
             'ca-climate-index', obj_name, file_name)
         f = open(file_name, "a")
+        sys.stdout = f
         f.write("\n")
         f.write("\n")
         f.write("======== Function(s) applied to " + var + " ========")
@@ -85,15 +87,21 @@ def append_metadata(func):
         f.write(f"Function name: {func.__name__}")
         f.write("\n")
         f.write(f"Function description: {func.__doc__}")
-        if args:
-            f.write(f"Function arguments: {args}")
-            f.write("\n")
+        f.write("\n")
+        # if args:
+        #     f.write(f"Function arguments: {args}")
+        #     f.write("\n")
         if len(kwargs)>1:
             f.write(f"Function keyword arguments: {args}")
             f.write("\n")
             for key, value in zip(list(kwargs.keys()), list(kwargs.values())):
                 f.write(f"{key} = {value}")
                 f.write("\n")
+        f.write("\n")
+        # f.write("Function standard output statements:")
+        # f.write("\n")
+        # f.write(sys.stdout)
+        # f.write("\n")
         f.write(f"Date function applied: {datestr}")
         f.write("\n")
         f.write("\n")
