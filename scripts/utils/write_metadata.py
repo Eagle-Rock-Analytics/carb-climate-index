@@ -80,7 +80,7 @@ def append_metadata(func):
         s3_client.download_file(
             'ca-climate-index', obj_name, file_name)        
         
-        with open(out_file_name, "a") as f:
+        with open(file_name, "a") as f:
             sys.stdout = f
             f.write("\n")
             f.write("======== Function applied to " + var + " ========")
@@ -92,13 +92,6 @@ def append_metadata(func):
             f.write("\n")
             f.write(f"Function description: {func.__doc__}")
             f.write("\n")
-            if len(kwargs)>1:
-                f.write(f"Function keyword arguments: {args}")
-                f.write("\n")
-                for key, value in zip(list(kwargs.keys()), list(kwargs.values())):
-                    f.write(f"{key} = {value}")
-                    f.write("\n")
-            f.write("\n")
             f.write(f"Function output statements:")
             f.write("\n")
             # Call the function
@@ -106,9 +99,8 @@ def append_metadata(func):
             
         sys.stdout = stdout_backup
         # Upload the file to S3
-        out_obj_name = f"{metadata_path}{file_name}"
         s3_client.upload_file(
-            out_file_name, 'ca-climate-index', file_name)
+            file_name, 'ca-climate-index', obj_name)
         os.remove(file_name)
         return result
     return metadata_generator
