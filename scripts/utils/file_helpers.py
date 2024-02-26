@@ -20,3 +20,26 @@ def list_webdir(url, ext=''):
     page = requests.get(url).text
     soup = BeautifulSoup(page, 'html.parser')
     return [url + '/' + node.get('href') for node in soup.find_all('a') if node.get('href').endswith(ext)]
+
+def min_max_standardize(df, col_to_run_on):
+    '''
+    Calculates a dataframes min and max values based on a specified column, then calculates
+    a min-max standardized value. Min, max, and standardized vaulue columns are created and
+    added to the dataframe.
+
+    Parameters
+    ----------
+    df: string
+        Dataframe name   
+    col_to_run_on: string
+        Column within the string to calculate min, max, and standardize
+    '''
+    max_value = df[col_to_run_on].max()
+    min_value = df[col_to_run_on].min()
+
+    # Get min-max values, standardize, and add columns to df
+    df['max_sum_value'] = max_value
+    df['min_sum_value'] = min_value
+    df['min_max_standardized'] = ((df[col_to_run_on] - min_value ) / (max_value - min_value))
+     
+    return df
