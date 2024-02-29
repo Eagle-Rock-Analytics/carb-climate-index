@@ -2,6 +2,10 @@
 import zarr
 from bs4 import BeautifulSoup
 import requests
+import boto3
+import zipfile
+import io
+import pandas as pd
 
 def to_zarr(ds, top_dir, domain, indicator, data_source, save_name):
     """Converts netcdf to zarr and sends to s3 bucket"""
@@ -43,3 +47,50 @@ def min_max_standardize(df, col_to_run_on):
     df['min_max_standardized'] = ((df[col_to_run_on] - min_value ) / (max_value - min_value))
      
     return df
+
+def pull_zipped_csv(bucket_name, directory):
+    # Create an S3 client
+    s3 = boto3.client('s3')
+
+    # List objects in the specified directory
+    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=directory)
+
+    # Check if objects were found
+    if 'Contents' in response:
+        # Iterate through each object found
+        for obj in response['Contents']:
+            # Get the key (filename) of the object
+            key = obj['Key']
+            
+            # Check if the object is a .zip file
+            if key.endswith('.zip'):
+                # Download the zip file into memory
+                zip_object = s3.get_object(Bucket=bucket_name, Key=key)
+                zip_data = io.BytesIO(zip_object['Body'].read())
+                
+                # Open the zip file
+                with zipfile.ZipFile(zip_data, 'r') as zip_ref:
+                    # Iterate through each file in the zip
+                    for file_name in zip_ref.namelist():
+                        # Check if the file is a .csv file
+                        if file_name.endswith('.csv'):
+                            # Read the .csv file
+                            with zip_ref.open(file_name) as csv_file:
+                                # Convert the csv content to pandas DataFrame
+                                df = pd.read_csv(csv_file)
+                                # Save the DataFrame with a similar name as the .csv file
+                                df_name = file_name[:-4]  # Remove .csv extension
+                                df.to_csv(f"{df_name}.csv", index=False)
+                                print(f"Saved DataFrame as '{df_name}.csv'")
+                                # You can now manipulate df as needed
+
+    else:
+        print("No objects found in the specified directory.")
+
+def upload_csv_aws(file_name, bucket_name, directory):
+    # Create an S3 client
+    s3 = boto3.client('s3')
+     # Save the file to AWS S3 using the client
+    with open(file_name, 'rb') as data:
+        s3.upload_fileobj(data, bucket_name, f"{directory}/{file_name}")
+    print(f"{file_name} uploaded to AWS")
