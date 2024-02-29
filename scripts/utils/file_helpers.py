@@ -48,7 +48,15 @@ def min_max_standardize(df, col_to_run_on):
      
     return df
 
-def pull_zipped_csv(bucket_name, directory):
+def pull_csv_from_directory(bucket_name, directory, search_zipped=True):
+    """
+    Pulls CSV files from a specified directory in an S3 bucket.
+    
+    Parameters:
+    - bucket_name (str): The name of the S3 bucket.
+    - directory (str): The directory within the bucket to search for CSV files.
+    - search_zipped (bool): If True, search for CSV files within zip files. If False, search for CSV files directly.
+    """
     # Create an S3 client
     s3 = boto3.client('s3')
 
@@ -63,7 +71,7 @@ def pull_zipped_csv(bucket_name, directory):
             key = obj['Key']
             
             # Check if the object is a .zip file
-            if key.endswith('.zip'):
+            if search_zipped and key.endswith('.zip'):
                 # Download the zip file into memory
                 zip_object = s3.get_object(Bucket=bucket_name, Key=key)
                 zip_data = io.BytesIO(zip_object['Body'].read())
@@ -83,6 +91,17 @@ def pull_zipped_csv(bucket_name, directory):
                                 df.to_csv(f"{df_name}.csv", index=False)
                                 print(f"Saved DataFrame as '{df_name}.csv'")
                                 # You can now manipulate df as needed
+            elif not search_zipped and key.endswith('.csv'):
+                # Directly download the CSV file
+                csv_object = s3.get_object(Bucket=bucket_name, Key=key)
+                csv_data = io.BytesIO(csv_object['Body'].read())
+                # Convert the csv content to pandas DataFrame
+                df = pd.read_csv(csv_data)
+                # Save the DataFrame with a similar name as the .csv file
+                df_name = key.split('/')[-1][:-4]  # Extract filename from key
+                df.to_csv(f"{df_name}.csv", index=False)
+                print(f"Saved DataFrame as '{df_name}.csv'")
+                # You can now manipulate df as needed
 
     else:
         print("No objects found in the specified directory.")
