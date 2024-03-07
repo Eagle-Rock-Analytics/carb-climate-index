@@ -6,3 +6,5 @@ jupyterlab_execute_time
 census-data-downloader
 rioxarray
 lxml
+pyogrio
+dask-geopandas
