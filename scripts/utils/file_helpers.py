@@ -106,10 +106,21 @@ def pull_csv_from_directory(bucket_name, directory, search_zipped=True):
     else:
         print("No objects found in the specified directory.")
 
-def upload_csv_aws(file_name, bucket_name, directory):
+
+def upload_csv_aws(file_names, bucket_name, directory):
+    """
+    Uploads CSV files to a specified directory in an S3 bucket.
+    
+    Parameters:
+    - bucket_name (str): The name of the S3 bucket.
+    - directory (str): The directory within the bucket to search for CSV files.
+    - file_names (str): .csv file to be uploaded to aws
+    """  
     # Create an S3 client
     s3 = boto3.client('s3')
-     # Save the file to AWS S3 using the client
-    with open(file_name, 'rb') as data:
-        s3.upload_fileobj(data, bucket_name, f"{directory}/{file_name}")
-    print(f"{file_name} uploaded to AWS")
+    # Iterate over each file name in the list
+    for file_name in file_names:
+        # Save the file to AWS S3 using the client
+        with open(file_name, 'rb') as data:
+            s3.upload_fileobj(data, bucket_name, f"{directory}/{file_name}")
+            print(f"{file_name} uploaded to AWS")
