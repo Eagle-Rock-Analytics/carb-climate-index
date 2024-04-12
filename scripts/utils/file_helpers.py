@@ -157,5 +157,19 @@ def filter_counties(df, county_column, county_list=None):
         
         # Filter rows where the value in the specified column matches any of the counties in the list
         filtered_df = df[df[county_column].str.lower().isin(county_list_lower)]
+                # Convert county_list to lowercase for case-insensitive comparison
+        county_list_lower = [county.lower() for county in county_list]
         
+        # Filter rows where the value in the specified column matches any of the counties in the list
+        filtered_df = df[df[county_column].str.lower().isin(county_list_lower)]
+    
+         # Identify removed counties
+        removed_counties = df[~df[county_column].str.lower().isin(county_list_lower)][county_column].unique()
+            # Print removed counties
+        if len(removed_counties) > 0:
+            print("Removed counties:")
+            for county in removed_counties:
+                print(county)
+        else:
+            print("No counties were removed.")
         return filtered_df
