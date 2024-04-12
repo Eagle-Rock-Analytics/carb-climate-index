@@ -124,3 +124,52 @@ def upload_csv_aws(file_names, bucket_name, directory):
         with open(file_name, 'rb') as data:
             s3.upload_fileobj(data, bucket_name, f"{directory}/{file_name}")
             print(f"{file_name} uploaded to AWS")
+
+def filter_counties(df, county_column, county_list=None):
+        '''
+        Filter a df's county column to a list of established CA counties
+        Parameters
+        ----------
+        df: dataframe
+            name of the dataframe to be filtered
+        
+        column: string
+            name of the county column within your dataframe
+
+        county_list: list
+            list of counties to be filtered for, if left blank the default list is CA counties shown below
+        '''
+
+        # Default county list if not provided
+        if county_list is None:
+            county_list = [
+                    'alameda', 'alpine', 'amador', 'butte', 'calaveras', 'colusa', 'contra costa', 'del norte',
+                    'el dorado', 'fresno', 'glenn', 'humboldt', 'imperial', 'inyo', 'kern', 'kings', 'lake', 'lassen',
+                    'los angeles', 'madera', 'marin', 'mariposa', 'mendocino', 'merced', 'modoc', 'mono', 'monterey',
+                    'napa', 'nevada', 'orange', 'placer', 'plumas', 'riverside', 'sacramento', 'san benito',
+                    'san bernardino', 'san diego', 'san francisco', 'san joaquin', 'san luis obispo', 'san mateo',
+                    'santa barbara', 'santa clara', 'santa cruz', 'shasta', 'sierra', 'siskiyou', 'solano', 'sonoma',
+                    'stanislaus', 'sutter', 'tehama', 'trinity', 'tulare', 'tuolumne', 'ventura', 'yolo', 'yuba'
+                ]
+        
+        # Convert county_list to lowercase for case-insensitive comparison
+        county_list_lower = [county.lower() for county in county_list]
+        
+        # Filter rows where the value in the specified column matches any of the counties in the list
+        filtered_df = df[df[county_column].str.lower().isin(county_list_lower)]
+                # Convert county_list to lowercase for case-insensitive comparison
+        county_list_lower = [county.lower() for county in county_list]
+        
+        # Filter rows where the value in the specified column matches any of the counties in the list
+        filtered_df = df[df[county_column].str.lower().isin(county_list_lower)]
+    
+         # Identify removed counties
+        removed_counties = df[~df[county_column].str.lower().isin(county_list_lower)][county_column].unique()
+            # Print removed counties
+        if len(removed_counties) > 0:
+            print("Removed counties:")
+            for county in removed_counties:
+                print(county)
+        else:
+            print("No counties were removed.")
+        return filtered_df
