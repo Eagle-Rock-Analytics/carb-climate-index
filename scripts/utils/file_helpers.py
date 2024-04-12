@@ -125,7 +125,7 @@ def upload_csv_aws(file_names, bucket_name, directory):
             s3.upload_fileobj(data, bucket_name, f"{directory}/{file_name}")
             print(f"{file_name} uploaded to AWS")
 
-    def filter_counties(df, county_column, county_list=None):
+def filter_counties(df, county_column, county_list=None):
         '''
         Filter a df's county column to a list of established CA counties
         Parameters
