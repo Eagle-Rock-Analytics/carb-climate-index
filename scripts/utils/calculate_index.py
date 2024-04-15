@@ -35,8 +35,9 @@ def format_df(df):
     Minor clean-up of pandas df -- can be resolved in future version
     Demo purposes only, at present
     '''
-
-    df = df.drop(columns='field_1') # drops extra field
+    if "field_1" in df.columns:
+        df = df.drop(columns='field_1') # drops extra field
+        
     df['GEOID'] = '0' + df['GEOID'] # formats GEOID column to match shapefile (has an extra 0 in front)
 
     for i in df.columns:
