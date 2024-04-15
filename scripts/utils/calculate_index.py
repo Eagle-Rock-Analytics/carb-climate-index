@@ -1,4 +1,8 @@
 def weight_domains(df, society, built, natural):
+    '''
+    Calculates the weighting scheme, based on input parameters:
+    society, built, and natural
+    '''
     governance_col = 'DUMMY_governance_summed_indicators_min_max_standardized'
     society_adjusted_col = 'DUMMY_society_tract_adjusted'
     built_adjusted_col = 'DUMMY_built_tract_adjusted'
@@ -32,7 +36,7 @@ def format_df(df):
     Demo purposes only, at present
     '''
 
-    df = df.drop(columns='field_1') # drops extra field
+    # df = df.drop(columns='field_1') # drops extra field
     df['GEOID'] = '0' + df['GEOID'] # formats GEOID column to match shapefile (has an extra 0 in front)
 
     for i in df.columns:
