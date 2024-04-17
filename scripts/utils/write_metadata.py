@@ -2,6 +2,7 @@ from datetime import datetime
 from functools import wraps
 import os
 import boto3
+import sys
 s3_client = boto3.client('s3')
 
 def make_metadata_files(df):
@@ -64,44 +65,42 @@ def append_metadata(func):
     Note: varname is a required keyword argument, and must be supplied to the function! 
     '''
     def metadata_generator(*args, **kwargs):
+        stdout_backup = sys.stdout
         metadata_path = "3_fair_data/metadata/"
-        # Call the function
-        result = func(*args, **kwargs)
+
         # Write the function parameters to file
         now = datetime.now()
         datestr = now.strftime("%B %d, %Y")
-        var = kwargs['varname']       
+        var = kwargs['varname']
+        
         # Download the metadata file from S3
         file_name = f"{var}_metadata.txt"
         obj_name = f"{metadata_path}{file_name}"
+        transform_prefix = func.__name__
         s3_client.download_file(
-            'ca-climate-index', obj_name, file_name)
-        f = open(file_name, "a")
-        f.write("\n")
-        f.write("\n")
-        f.write("======== Function(s) applied to " + var + " ========")
-        f.write("\n")
-        f.write("\n")
-        f.write(f"Function name: {func.__name__}")
-        f.write("\n")
-        f.write(f"Function description: {func.__doc__}")
-        if args:
-            f.write(f"Function arguments: {args}")
+            'ca-climate-index', obj_name, file_name)        
+        
+        with open(file_name, "a") as f:
+            sys.stdout = f
             f.write("\n")
-        if len(kwargs)>1:
-            f.write(f"Function keyword arguments: {args}")
+            f.write("======== Function applied to " + var + " ========")
             f.write("\n")
-            for key, value in zip(list(kwargs.keys()), list(kwargs.values())):
-                f.write(f"{key} = {value}")
-                f.write("\n")
-        f.write(f"Date function applied: {datestr}")
-        f.write("\n")
-        f.write("\n")
-        f.close()
+            f.write("\n")
+            f.write(f"Function name: {func.__name__}")
+            f.write("\n")
+            f.write(f"Date function applied: {datestr}")
+            f.write("\n")
+            f.write(f"Function description: {func.__doc__}")
+            f.write("\n")
+            f.write(f"Function output statements:")
+            f.write("\n")
+            # Call the function
+            result = func(*args, **kwargs)     
+            
+        sys.stdout = stdout_backup
         # Upload the file to S3
         s3_client.upload_file(
             file_name, 'ca-climate-index', obj_name)
-        print(f"Updated metadata file in {obj_name} in S3 bucket")
         os.remove(file_name)
         return result
     return metadata_generator
