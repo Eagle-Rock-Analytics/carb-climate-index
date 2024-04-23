@@ -110,6 +110,8 @@ def pull_csv_from_directory(bucket_name, directory, search_zipped=True):
 def upload_csv_aws(file_names, bucket_name, directory):
     """
     Uploads CSV files to a specified directory in an S3 bucket.
+    Important: When running a single file, place the file_names entry as a bracket, this
+    is because the code by default, looks for a list of files to upload
     
     Parameters:
     - bucket_name (str): The name of the S3 bucket.
