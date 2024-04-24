@@ -71,14 +71,15 @@ def append_metadata(func):
         # Write the function parameters to file
         now = datetime.now()
         datestr = now.strftime("%B %d, %Y")
-        var = kwargs['varname']
-        
-        # Download the metadata file from S3
+        var = kwargs['varname']       
         file_name = f"{var}_metadata.txt"
-        obj_name = f"{metadata_path}{file_name}"
-        transform_prefix = func.__name__
-        s3_client.download_file(
-            'ca-climate-index', obj_name, file_name)        
+
+        if var != "test":
+            # Download the metadata file from S3
+            obj_name = f"{metadata_path}{file_name}"
+            transform_prefix = func.__name__
+            s3_client.download_file(
+                'ca-climate-index', obj_name, file_name)
         
         with open(file_name, "a") as f:
             sys.stdout = f
@@ -88,7 +89,7 @@ def append_metadata(func):
             f.write("\n")
             f.write(f"Function name: {func.__name__}")
             f.write("\n")
-            f.write(f"Date function applied: {datestr}")
+            f.write(f"Date function applied and/or metadata document generated: {datestr}")
             f.write("\n")
             f.write(f"Function description: {func.__doc__}")
             f.write("\n")
@@ -98,10 +99,11 @@ def append_metadata(func):
             result = func(*args, **kwargs)     
             
         sys.stdout = stdout_backup
-        # Upload the file to S3
-        s3_client.upload_file(
-            file_name, 'ca-climate-index', obj_name)
-        os.remove(file_name)
+        if var != "test":
+            # Upload the file to S3
+            s3_client.upload_file(
+                file_name, 'ca-climate-index', obj_name)
+            os.remove(file_name)
         return result
     return metadata_generator
 
