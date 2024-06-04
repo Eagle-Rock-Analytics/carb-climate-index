@@ -6,6 +6,7 @@ import boto3
 import zipfile
 import io
 import pandas as pd
+import os
 
 def to_zarr(ds, top_dir, domain, indicator, data_source, save_name):
     """Converts netcdf to zarr and sends to s3 bucket"""
@@ -103,6 +104,43 @@ def pull_csv_from_directory(bucket_name, directory, search_zipped=True):
                 print(f"Saved DataFrame as '{df_name}.csv'")
                 # You can now manipulate df as needed
 
+    else:
+        print("No objects found in the specified directory.")
+
+def pull_gpkg_from_directory(bucket_name, directory):
+    """
+    Pulls GeoPackage files from a specified directory in an S3 bucket.
+    
+    Parameters:
+    - bucket_name (str): The name of the S3 bucket.
+    - directory (str): The directory within the bucket to search for GeoPackage files.
+    """
+    # Create an S3 client
+    s3 = boto3.client('s3')
+
+    # List objects in the specified directory
+    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=directory)
+
+    # Check if objects were found
+    if 'Contents' in response:
+        # Iterate through each object found
+        for obj in response['Contents']:
+            # Get the key (filename) of the object
+            key = obj['Key']
+            
+            # Check if the object is a .gpkg file
+            if key.endswith('.gpkg'):
+                # Download the GeoPackage file into memory
+                gpkg_object = s3.get_object(Bucket=bucket_name, Key=key)
+                gpkg_data = io.BytesIO(gpkg_object['Body'].read())
+                
+                # Save the GeoPackage file locally
+                gpkg_filename = os.path.basename(key)
+                with open(gpkg_filename, 'wb') as gpkg_file:
+                    gpkg_file.write(gpkg_data.getvalue())
+                
+                print(f"Saved GeoPackage as '{gpkg_filename}' locally")
+                # You can now use the saved file for further processing
     else:
         print("No objects found in the specified directory.")
 
