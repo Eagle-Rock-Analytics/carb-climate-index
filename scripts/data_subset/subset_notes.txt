@@ -1,3 +1,0 @@
-dummy file to get file structure updated.
-
-scripts specific for subsetting national datasets and renaming all metrics/indicators will be present in this folder

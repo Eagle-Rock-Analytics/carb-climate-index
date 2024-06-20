@@ -1,2 +1,0 @@
-# setting up structure
-# scripts for index methodology creation
