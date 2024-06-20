@@ -1,0 +1,329 @@
+
+======== Function applied to test ========
+
+Function name: communication_infrastructure_upload
+Date function applied and/or metadata document generated: June 20, 2024
+Function description: 
+    Uploads prepared metric calculations within the communication infrastructure to the S3 bucket. The metrics are:
+    - does a tract has low broadband speeds of <25 mpbs download
+    - # of tv contour towers per county
+    - # of microwave towers per county
+    - # of radio towers per county
+    - # of cellular towers per county
+    - # of paging towers per county
+    - # of mobile towers per county
+
+    Data for this metric was sourced from Homeland Infrastructure Foundation-Level Data at:
+    https://hifld-geoplatform.opendata.arcgis.com/ and the California Public Utilities Commission at https://www.cpuc.ca.gov/industries-and-topics/internet-and-phone/california-advanced-services-fund/project-development-resources---data-and-maps.
+
+    Methods
+    -------
+    All data were reprojected to Cal-CRAI's standardized coordinate reference system (crs) 4269.
+    Data was then spatially joined to California 2021 Tiger census tract data.
+    Columns relevent per metric were maintained and summed to calculate total towers per county.
+    For the broadband speed metric, a flag was used to indicate tracts with low internet speeds.
+    Data was then merged back to 2021 census tract data so each CA tract has a metric value.
+    
+    Parameters
+    ----------
+    input_csv: string
+        csv communication metric data 
+    export: True/False boolean
+        False = will not upload resulting df containing CAL CRAI communication metric to AWS
+        True = will upload resulting df containing CAL CRAI communication facility metric to AWS
+
+    Script
+    ------
+    built_communication_infrastructure.ipynb
+
+    Note:
+    This function assumes users have configured the AWS CLI such that their access key / secret key pair are stored in ~/.aws/credentials.
+    See https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html for guidance.
+    
+Function output statements:
+Data transformation: data cleaned by isolating and renaming relevant columns.
+Data transformation: data was spatially joined to California census tract and county data.
+Data transformation: an additional column was calculated by summing or flagging a specified column per county.
+built_cellular_towers_metric.csv uploaded to AWS.
+
+======== Function applied to test ========
+
+Function name: communication_infrastructure_upload
+Date function applied and/or metadata document generated: June 20, 2024
+Function description: 
+    Uploads prepared metric calculations within the communication infrastructure to the S3 bucket. The metrics are:
+    - does a tract has low broadband speeds of <25 mpbs download
+    - # of tv contour towers per county
+    - # of microwave towers per county
+    - # of radio towers per county
+    - # of cellular towers per county
+    - # of paging towers per county
+    - # of mobile towers per county
+
+    Data for this metric was sourced from Homeland Infrastructure Foundation-Level Data at:
+    https://hifld-geoplatform.opendata.arcgis.com/ and the California Public Utilities Commission at https://www.cpuc.ca.gov/industries-and-topics/internet-and-phone/california-advanced-services-fund/project-development-resources---data-and-maps.
+
+    Methods
+    -------
+    All data were reprojected to Cal-CRAI's standardized coordinate reference system (crs) 4269.
+    Data was then spatially joined to California 2021 Tiger census tract data.
+    Columns relevent per metric were maintained and summed to calculate total towers per county.
+    For the broadband speed metric, a flag was used to indicate tracts with low internet speeds.
+    Data was then merged back to 2021 census tract data so each CA tract has a metric value.
+    
+    Parameters
+    ----------
+    input_csv: string
+        csv communication metric data 
+    export: True/False boolean
+        False = will not upload resulting df containing CAL CRAI communication metric to AWS
+        True = will upload resulting df containing CAL CRAI communication facility metric to AWS
+
+    Script
+    ------
+    built_communication_infrastructure.ipynb
+
+    Note:
+    This function assumes users have configured the AWS CLI such that their access key / secret key pair are stored in ~/.aws/credentials.
+    See https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html for guidance.
+    
+Function output statements:
+Data transformation: data cleaned by isolating and renaming relevant columns.
+Data transformation: data was spatially joined to California census tract and county data.
+Data transformation: an additional column was calculated by summing or flagging a specified column per county.
+built_radio_towers_metric uploaded to AWS.
+
+======== Function applied to test ========
+
+Function name: communication_infrastructure_upload
+Date function applied and/or metadata document generated: June 20, 2024
+Function description: 
+    Uploads prepared metric calculations within the communication infrastructure to the S3 bucket. The metrics are:
+    - does a tract has low broadband speeds of <25 mpbs download
+    - # of tv contour towers per county
+    - # of microwave towers per county
+    - # of radio towers per county
+    - # of cellular towers per county
+    - # of paging towers per county
+    - # of mobile towers per county
+
+    Data for this metric was sourced from Homeland Infrastructure Foundation-Level Data at:
+    https://hifld-geoplatform.opendata.arcgis.com/ and the California Public Utilities Commission at https://www.cpuc.ca.gov/industries-and-topics/internet-and-phone/california-advanced-services-fund/project-development-resources---data-and-maps.
+
+    Methods
+    -------
+    All data were reprojected to Cal-CRAI's standardized coordinate reference system (crs) 4269.
+    Data was then spatially joined to California 2021 Tiger census tract data.
+    Columns relevent per metric were maintained and summed to calculate total towers per county.
+    For the broadband speed metric, a flag was used to indicate tracts with low internet speeds.
+    Data was then merged back to 2021 census tract data so each CA tract has a metric value.
+    
+    Parameters
+    ----------
+    input_csv: string
+        csv communication metric data 
+    export: True/False boolean
+        False = will not upload resulting df containing CAL CRAI communication metric to AWS
+        True = will upload resulting df containing CAL CRAI communication facility metric to AWS
+
+    Script
+    ------
+    built_communication_infrastructure.ipynb
+
+    Note:
+    This function assumes users have configured the AWS CLI such that their access key / secret key pair are stored in ~/.aws/credentials.
+    See https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html for guidance.
+    
+Function output statements:
+Data transformation: data cleaned by isolating and renaming relevant columns.
+Data transformation: data was spatially joined to California census tract and county data.
+Data transformation: an additional column was calculated by summing or flagging a specified column per county.
+built_mobile_towers_metric.csv uploaded to AWS.
+
+======== Function applied to test ========
+
+Function name: communication_infrastructure_upload
+Date function applied and/or metadata document generated: June 20, 2024
+Function description: 
+    Uploads prepared metric calculations within the communication infrastructure to the S3 bucket. The metrics are:
+    - does a tract has low broadband speeds of <25 mpbs download
+    - # of tv contour towers per county
+    - # of microwave towers per county
+    - # of radio towers per county
+    - # of cellular towers per county
+    - # of paging towers per county
+    - # of mobile towers per county
+
+    Data for this metric was sourced from Homeland Infrastructure Foundation-Level Data at:
+    https://hifld-geoplatform.opendata.arcgis.com/ and the California Public Utilities Commission at https://www.cpuc.ca.gov/industries-and-topics/internet-and-phone/california-advanced-services-fund/project-development-resources---data-and-maps.
+
+    Methods
+    -------
+    All data were reprojected to Cal-CRAI's standardized coordinate reference system (crs) 4269.
+    Data was then spatially joined to California 2021 Tiger census tract data.
+    Columns relevent per metric were maintained and summed to calculate total towers per county.
+    For the broadband speed metric, a flag was used to indicate tracts with low internet speeds.
+    Data was then merged back to 2021 census tract data so each CA tract has a metric value.
+    
+    Parameters
+    ----------
+    input_csv: string
+        csv communication metric data 
+    export: True/False boolean
+        False = will not upload resulting df containing CAL CRAI communication metric to AWS
+        True = will upload resulting df containing CAL CRAI communication facility metric to AWS
+
+    Script
+    ------
+    built_communication_infrastructure.ipynb
+
+    Note:
+    This function assumes users have configured the AWS CLI such that their access key / secret key pair are stored in ~/.aws/credentials.
+    See https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html for guidance.
+    
+Function output statements:
+Data transformation: data cleaned by isolating and renaming relevant columns.
+Data transformation: data was spatially joined to California census tract and county data.
+Data transformation: an additional column was calculated by summing or flagging a specified column per county.
+built_paging_towers_metric.csv uploaded to AWS.
+
+======== Function applied to test ========
+
+Function name: communication_infrastructure_upload
+Date function applied and/or metadata document generated: June 20, 2024
+Function description: 
+    Uploads prepared metric calculations within the communication infrastructure to the S3 bucket. The metrics are:
+    - does a tract has low broadband speeds of <25 mpbs download
+    - # of tv contour towers per county
+    - # of microwave towers per county
+    - # of radio towers per county
+    - # of cellular towers per county
+    - # of paging towers per county
+    - # of mobile towers per county
+
+    Data for this metric was sourced from Homeland Infrastructure Foundation-Level Data at:
+    https://hifld-geoplatform.opendata.arcgis.com/ and the California Public Utilities Commission at https://www.cpuc.ca.gov/industries-and-topics/internet-and-phone/california-advanced-services-fund/project-development-resources---data-and-maps.
+
+    Methods
+    -------
+    All data were reprojected to Cal-CRAI's standardized coordinate reference system (crs) 4269.
+    Data was then spatially joined to California 2021 Tiger census tract data.
+    Columns relevent per metric were maintained and summed to calculate total towers per county.
+    For the broadband speed metric, a flag was used to indicate tracts with low internet speeds.
+    Data was then merged back to 2021 census tract data so each CA tract has a metric value.
+    
+    Parameters
+    ----------
+    input_csv: string
+        csv communication metric data 
+    export: True/False boolean
+        False = will not upload resulting df containing CAL CRAI communication metric to AWS
+        True = will upload resulting df containing CAL CRAI communication facility metric to AWS
+
+    Script
+    ------
+    built_communication_infrastructure.ipynb
+
+    Note:
+    This function assumes users have configured the AWS CLI such that their access key / secret key pair are stored in ~/.aws/credentials.
+    See https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html for guidance.
+    
+Function output statements:
+Data transformation: data cleaned by isolating and renaming relevant columns.
+Data transformation: data was spatially joined to California census tract and county data.
+Data transformation: an additional column was calculated by summing or flagging a specified column per county.
+built_tv_contours_metric.csv uploaded to AWS.
+
+======== Function applied to test ========
+
+Function name: communication_infrastructure_upload
+Date function applied and/or metadata document generated: June 20, 2024
+Function description: 
+    Uploads prepared metric calculations within the communication infrastructure to the S3 bucket. The metrics are:
+    - does a tract has low broadband speeds of <25 mpbs download
+    - # of tv contour towers per county
+    - # of microwave towers per county
+    - # of radio towers per county
+    - # of cellular towers per county
+    - # of paging towers per county
+    - # of mobile towers per county
+
+    Data for this metric was sourced from Homeland Infrastructure Foundation-Level Data at:
+    https://hifld-geoplatform.opendata.arcgis.com/ and the California Public Utilities Commission at https://www.cpuc.ca.gov/industries-and-topics/internet-and-phone/california-advanced-services-fund/project-development-resources---data-and-maps.
+
+    Methods
+    -------
+    All data were reprojected to Cal-CRAI's standardized coordinate reference system (crs) 4269.
+    Data was then spatially joined to California 2021 Tiger census tract data.
+    Columns relevent per metric were maintained and summed to calculate total towers per county.
+    For the broadband speed metric, a flag was used to indicate tracts with low internet speeds.
+    Data was then merged back to 2021 census tract data so each CA tract has a metric value.
+    
+    Parameters
+    ----------
+    input_csv: string
+        csv communication metric data 
+    export: True/False boolean
+        False = will not upload resulting df containing CAL CRAI communication metric to AWS
+        True = will upload resulting df containing CAL CRAI communication facility metric to AWS
+
+    Script
+    ------
+    built_communication_infrastructure.ipynb
+
+    Note:
+    This function assumes users have configured the AWS CLI such that their access key / secret key pair are stored in ~/.aws/credentials.
+    See https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html for guidance.
+    
+Function output statements:
+Data transformation: data cleaned by isolating and renaming relevant columns.
+Data transformation: data was spatially joined to California census tract and county data.
+Data transformation: an additional column was calculated by summing or flagging a specified column per county.
+built_microwave_towers_metric.csv uploaded to AWS.
+
+======== Function applied to test ========
+
+Function name: communication_infrastructure_upload
+Date function applied and/or metadata document generated: June 20, 2024
+Function description: 
+    Uploads prepared metric calculations within the communication infrastructure to the S3 bucket. The metrics are:
+    - does a tract has low broadband speeds of <25 mpbs download
+    - # of tv contour towers per county
+    - # of microwave towers per county
+    - # of radio towers per county
+    - # of cellular towers per county
+    - # of paging towers per county
+    - # of mobile towers per county
+
+    Data for this metric was sourced from Homeland Infrastructure Foundation-Level Data at:
+    https://hifld-geoplatform.opendata.arcgis.com/ and the California Public Utilities Commission at https://www.cpuc.ca.gov/industries-and-topics/internet-and-phone/california-advanced-services-fund/project-development-resources---data-and-maps.
+
+    Methods
+    -------
+    All data were reprojected to Cal-CRAI's standardized coordinate reference system (crs) 4269.
+    Data was then spatially joined to California 2021 Tiger census tract data.
+    Columns relevent per metric were maintained and summed to calculate total towers per county.
+    For the broadband speed metric, a flag was used to indicate tracts with low internet speeds.
+    Data was then merged back to 2021 census tract data so each CA tract has a metric value.
+    
+    Parameters
+    ----------
+    input_csv: string
+        csv communication metric data 
+    export: True/False boolean
+        False = will not upload resulting df containing CAL CRAI communication metric to AWS
+        True = will upload resulting df containing CAL CRAI communication facility metric to AWS
+
+    Script
+    ------
+    built_communication_infrastructure.ipynb
+
+    Note:
+    This function assumes users have configured the AWS CLI such that their access key / secret key pair are stored in ~/.aws/credentials.
+    See https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html for guidance.
+    
+Function output statements:
+Data transformation: data cleaned by isolating and renaming relevant columns.
+Data transformation: data was spatially joined to California census tract and county data.
+Data transformation: an additional column was calculated by summing or flagging a specified column per county.
+built_broadband_internet_metric.csv uploaded to AWS.

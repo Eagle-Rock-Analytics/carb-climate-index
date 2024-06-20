@@ -164,3 +164,11 @@ def filter_counties(df, county_column, county_list=None):
     omitted_df = df[~df[county_column].str.lower().isin(county_list_lower)]
     
     return filtered_df, omitted_df
+
+# helper function to identify data min/maxes
+def data_stats_check(df, col):
+    print('Calculating stats on {}...'.format(col))
+    print('Data min: ', df[col].min())
+    print('Data max: ', df[col].max())
+    print('Data mean: ', df[col].mean())
+    print('\n')
