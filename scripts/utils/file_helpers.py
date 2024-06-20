@@ -188,3 +188,9 @@ def data_stats_check(df, col):
     print('Data max: ', df[col].max())
     print('Data mean: ', df[col].mean())
     print('\n')
+
+def county_count(df, county_col, county, counter):
+    county_isolate = df[df[county_col]==county]
+    county_isolate_drop_duplicates= county_isolate.drop_duplicates(subset=[county_col, counter])
+    print(f'Length of df for {county} county without dropping duplicates:  {len(county_isolate)}')
+    print(f'Length of df for {county} county after dropping duplicates: {len(county_isolate_drop_duplicates)}')
