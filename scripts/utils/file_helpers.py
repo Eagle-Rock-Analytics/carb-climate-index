@@ -180,3 +180,17 @@ def filter_counties(df, county_column, county_list=None):
     omitted_df = df[~df[county_column].str.lower().isin(county_list_lower)]
     
     return filtered_df, omitted_df
+
+# helper function to identify data min/maxes
+def data_stats_check(df, col):
+    print('Calculating stats on {}...'.format(col))
+    print('Data min: ', df[col].min())
+    print('Data max: ', df[col].max())
+    print('Data mean: ', df[col].mean())
+    print('\n')
+
+def county_count(df, county_col, county, counter):
+    county_isolate = df[df[county_col]==county]
+    county_isolate_drop_duplicates= county_isolate.drop_duplicates(subset=[county_col, counter])
+    print(f'Length of df for {county} county without dropping duplicates:  {len(county_isolate)}')
+    print(f'Length of df for {county} county after dropping duplicates: {len(county_isolate_drop_duplicates)}')
