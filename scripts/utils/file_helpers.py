@@ -26,28 +26,6 @@ def list_webdir(url, ext=''):
     soup = BeautifulSoup(page, 'html.parser')
     return [url + '/' + node.get('href') for node in soup.find_all('a') if node.get('href').endswith(ext)]
 
-def min_max_standardize(df, col_to_run_on):
-    '''
-    Calculates a dataframes min and max values based on a specified column, then calculates
-    a min-max standardized value. Min, max, and standardized vaulue columns are created and
-    added to the dataframe.
-
-    Parameters
-    ----------
-    df: string
-        Dataframe name   
-    col_to_run_on: string
-        Column within the string to calculate min, max, and standardize
-    '''
-    max_value = df[col_to_run_on].max()
-    min_value = df[col_to_run_on].min()
-
-    # Get min-max values, standardize, and add columns to df
-    df['max_sum_value'] = max_value
-    df['min_sum_value'] = min_value
-    df['min_max_standardized'] = ((df[col_to_run_on] - min_value ) / (max_value - min_value))
-     
-    return df
 
 def pull_csv_from_directory(bucket_name, directory, search_zipped=True):
     """
@@ -202,3 +180,17 @@ def filter_counties(df, county_column, county_list=None):
     omitted_df = df[~df[county_column].str.lower().isin(county_list_lower)]
     
     return filtered_df, omitted_df
+
+# helper function to identify data min/maxes
+def data_stats_check(df, col):
+    print('Calculating stats on {}...'.format(col))
+    print('Data min: ', df[col].min())
+    print('Data max: ', df[col].max())
+    print('Data mean: ', df[col].mean())
+    print('\n')
+
+def county_count(df, county_col, county, counter):
+    county_isolate = df[df[county_col]==county]
+    county_isolate_drop_duplicates= county_isolate.drop_duplicates(subset=[county_col, counter])
+    print(f'Length of df for {county} county without dropping duplicates:  {len(county_isolate)}')
+    print(f'Length of df for {county} county after dropping duplicates: {len(county_isolate_drop_duplicates)}')
