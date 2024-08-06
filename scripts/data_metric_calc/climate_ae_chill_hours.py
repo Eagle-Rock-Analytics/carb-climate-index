@@ -131,7 +131,7 @@ hist_ds = selections.retrieve()
 # calculate metric -- subset for Nov 1 - Feb 28/29 (excluding March 1)
 winter_months = [11, 12, 1, 2]
 ds_winter = ds.isel(time=ds.time.dt.month.isin(winter_months))
-ds_winter_hist = hist_ds.isel(time=ds.time.dt.month.isin(winter_months))
+ds_winter_hist = hist_ds.isel(time=hist_ds.time.dt.month.isin(winter_months))
 
 # using 45 and under model
 chill_threshold = 45
