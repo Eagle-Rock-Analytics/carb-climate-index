@@ -196,8 +196,8 @@ wn_delta_ds.name = "mean_change_annual_warm_nights"
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 3: Reproject data to census tract projection
 # read in CA census tiger file -- not working from s3 link, uploading manually to keep testing
-# census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/"
-census_shp_dir = "tl_2021_06_tract.shp"
+census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/"
+#census_shp_dir = "tl_2021_06_tract.shp"
 ca_boundaries = gpd.read_file(census_shp_dir)
 
 # # need to rename columns so we don't have any duplicates in the final geodatabase
