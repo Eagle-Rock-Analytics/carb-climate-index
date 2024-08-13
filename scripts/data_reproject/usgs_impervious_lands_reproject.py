@@ -21,8 +21,10 @@ def reproject_nlcd_impervious_lands(ds, ca_boundaries, run_code=True, varname=''
     """
     Reprojects the CA-wide USGS impervious lands zarr to California Census Tract Coordinate Reference System, 
     then clips to these CA tracts, and uploads to AWS S3. This code differs from the 
-    reproject_shapefile() function by utilizing dask-geopandas to manipulate large datasets and saving the result
-    as 13 parquet files. 
+    reproject_shapefile() function by utilizing dask-geopandas to manipulate this very large dataset
+    and saving the result as 45 parquet files. 
+
+    This was run in a script in a computing cluster to leverage additional memory. 
 
     Note:
     This function assumes users have configured the AWS CLI such that their access key / secret key pair are stored in
@@ -44,7 +46,7 @@ def reproject_nlcd_impervious_lands(ds, ca_boundaries, run_code=True, varname=''
 
     Script
     ------
-    large_geospatial_reproject.ipynb    
+    usgs_impervious_lands_reproject.py    
     """
     s3_client = boto3.client('s3')  
     bucket_name = 'ca-climate-index' 
@@ -69,10 +71,8 @@ def reproject_nlcd_impervious_lands(ds, ca_boundaries, run_code=True, varname=''
         da = ds.impervious_surface
         df = da.to_dask_dataframe()
         df = df[["impervious_surface","x","y"]]
-        print('made dask df')
 
         for i in range(len(list(df.partitions))):
-            print(f"reading in partition {i}")
             part_df = df.partitions[i].compute()
             part_df = part_df[part_df["impervious_surface"]!=127.0]
             gdf = gpd.GeoDataFrame(
@@ -92,6 +92,6 @@ ds = xr.open_zarr(in_fname)
 # read in CA census tiger file
 census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/"
 ca_boundaries = gpd.read_file(census_shp_dir)
-varname = 'test'
+varname = 'natural_usgs_impervious'
 
 rdf = reproject_nlcd_impervious_lands(ds, ca_boundaries, run_code=False, varname=varname)
