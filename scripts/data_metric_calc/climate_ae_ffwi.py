@@ -55,7 +55,7 @@ sim_name_dict = {
     'FGOALS-g3'
 }
 
-def reproject_to_tracts(ds_delta, ca_boundaries, county):
+def reproject_to_tracts(ds_delta, ca_boundaries):
     df = ds_delta.to_dataframe().reset_index()
     gdf = gpd.GeoDataFrame(
     df, geometry=gpd.points_from_xy(df.x,df.y))
@@ -66,7 +66,6 @@ def reproject_to_tracts(ds_delta, ca_boundaries, county):
     
     clipped_gdf = gpd.sjoin_nearest(ca_boundaries, gdf, how='left')
     clipped_gdf = clipped_gdf.drop(['index_right'], axis=1)
-    clipped_gdf = clipped_gdf[clipped_gdf["NAME"]==county[0]]
     ### some coastal tracts do not contain any land grid cells ###
     ### due to the WRF's underlying surface type for a given grid cell. ###
     
