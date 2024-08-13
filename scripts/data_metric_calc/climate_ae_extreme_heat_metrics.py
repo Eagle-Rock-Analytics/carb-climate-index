@@ -274,6 +274,7 @@ hd_data_std = min_max_standardize(hd_df, col=hd_delta_ds.name)
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 5: Export data as csv
 # Data will be exported via pcluster run
+
 # clean up dataframes prior to export
 hd_data_std = hd_data_std.drop(columns=['geometry'])
 wn_data_std = wn_data_std.drop(columns=['geometry'])
