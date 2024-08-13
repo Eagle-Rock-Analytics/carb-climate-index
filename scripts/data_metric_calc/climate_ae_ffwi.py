@@ -55,21 +55,88 @@ sim_name_dict = {
     'FGOALS-g3'
 }
 
-def reproject_to_tracts(ds_delta, ca_boundaries):
-    # this step takes about 12 minutes with 3km data (~1 min with 9km data)
+def reproject_to_tracts(ds_delta, ca_boundaries, county):
     df = ds_delta.to_dataframe().reset_index()
     gdf = gpd.GeoDataFrame(
     df, geometry=gpd.points_from_xy(df.x,df.y))
     gdf = gdf.set_crs(crs)
     gdf = gdf.to_crs(ca_boundaries.crs)
-
-    # clipped_gdf = clipped_gdf.set_index(['USCB_GEOID'])
-    ca_boundaries = ca_boundaries.set_index(['USCB_GEOID'])
+    
+    ca_boundaries = ca_boundaries.set_index(['GEOID'])
+    
     clipped_gdf = gpd.sjoin_nearest(ca_boundaries, gdf, how='left')
-    clipped_gdf = clipped_gdf[["geometry",ds_delta.name]]
+    clipped_gdf = clipped_gdf.drop(['index_right'], axis=1)
+    clipped_gdf = clipped_gdf[clipped_gdf["NAME"]==county[0]]
+    ### some coastal tracts do not contain any land grid cells ###
+    ### due to the WRF's underlying surface type for a given grid cell. ###
+    
+    # aggregate the gridded data to the tract level
+    clipped_gdf_diss = clipped_gdf.reset_index().dissolve(
+        by='GEOID', aggfunc='mean')
+    clipped_gdf_diss = clipped_gdf_diss.rename(
+        columns={f"{ds_delta.name}_right":
+                 ds_delta.name}
+    )
+    
+    # separate tracts with data from tracts without data
+    clipped_gdf_nan = clipped_gdf_diss[np.isnan(
+        clipped_gdf_diss[ds_delta.name]
+    )]
+    clipped_gdf_nan = clipped_gdf_nan[["geometry",ds_delta.name]]
+    clipped_gdf_valid = clipped_gdf_diss[~np.isnan(
+        clipped_gdf_diss[ds_delta.name]
+    )]
+    clipped_gdf_valid = clipped_gdf_valid[["geometry",ds_delta.name]]
 
-    diss_gdf = clipped_gdf.reset_index().dissolve(by='USCB_GEOID', aggfunc='mean')
-    return diss_gdf
+    # compute the centroid of each tract
+    clipped_gdf_nan["centroid"] = clipped_gdf_nan.centroid
+    clipped_gdf_nan = clipped_gdf_nan.set_geometry("centroid")
+    clipped_gdf_valid["centroid"] = clipped_gdf_valid.centroid
+    clipped_gdf_valid = clipped_gdf_valid.set_geometry("centroid")
+    
+    # fill in missing tracts with values from the closest tract
+    # in terms of distance between the tract centroids
+    clipped_gdf_filled = clipped_gdf_nan.sjoin_nearest(clipped_gdf_valid, how='left')
+    clipped_gdf_filled = clipped_gdf_filled[["geometry_left",f"{ds_delta.name}_right"]]
+    clipped_gdf_filled = clipped_gdf_filled.rename(columns={
+        "geometry_left":"geometry", f"{ds_delta.name}_right":ds_delta.name
+    })
+    clipped_gdf_valid = clipped_gdf_valid.drop(columns="centroid")
+ 
+    # concatenate filled-in tracts with the original tract which had data
+    gdf_all_tracts = pd.concat([clipped_gdf_valid,clipped_gdf_filled])
+
+    return gdf_all_tracts
+
+def min_max_standardize(df, col):
+    '''
+    Calculates min and max values for specified columns, then calculates
+    min-max standardized values.
+
+    Parameters
+    ----------
+    df: DataFrame
+        Input dataframe   
+    cols_to_run_on: list
+        List of columns to calculate min, max, and standardize
+    '''
+    max_value = df[col].max()
+    min_value = df[col].min()
+
+    # Get min-max values, standardize, and add columns to df
+    prefix = col # Extracting the prefix from the column name
+    df[f'{prefix}_min'] = min_value
+    df[f'{prefix}_max'] = max_value
+    df[f'{prefix}_min_max_standardized'] = ((df[col] - min_value) / (max_value - min_value))
+
+    # checker to make sure new min_max column values arent < 0 > 1
+    df[f'{prefix}_min_max_standardized'].loc[df[f'{prefix}_min_max_standardized'] < 0] = 0
+    df[f'{prefix}_min_max_standardized'].loc[df[f'{prefix}_min_max_standardized'] > 1] = 1
+
+    # Drop the original columns -- we want to keep as a check
+    # df = df.drop(columns=[col])
+     
+    return df
 
 # -------------------------------------------------------------------------------------------------
 ## Step 1: Retrieve data
@@ -155,73 +222,17 @@ ds_ffwi_f = (ds_f >= ffwi_threshold).groupby('time.year').sum('time', min_count=
 ds_ffwi_h = (hist_ds >= ffwi_threshold).groupby('time.year').sum('time', min_count=1)
 
 # Difference between chronic (at 2.0°C warming level) and historical baseline (1981-2010)
-# handle different dimensions first
-
-ds_ffwi_chronic_avg = ds_ffwi_chronic.mean(dim='year')
-ds_ffwi_chronic_avg.name = "change_ffwi_days" # assign name so it can convert to pd.DataFrame
-
+ds_delta = ds_ffwi_f - ds_ffwi_h
+ds_delta.name = "change_ffwi_days" # assign name so it can convert to pd.DataFrame
 
 # -------------------------------------------------------------------------------------------------
 ## Step 3: Reproject data to census tract projection
-# read in CA census tiger file -- not working from s3 link, uploading manually to keep testing
-census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/"
-# census_shp_dir = "tl_2021_06_tract.shp"
-ca_boundaries = gpd.read_file(census_shp_dir)
-
-# # need to rename columns so we don't have any duplicates in the final geodatabase
-column_names = ca_boundaries.columns
-new_column_names = ["USCB_"+column for column in column_names if column != "geometry"]
-ca_boundaries = ca_boundaries.rename(columns=dict(zip(column_names, new_column_names)))
-ca_boundaries = ca_boundaries.to_crs(crs=3857) 
-
-df = ds_ffwi_chronic_avg.to_dataframe().reset_index()
-
-# this step takes about 12 minutes with 3km data (~1 min with 9km data)
-gdf = gpd.GeoDataFrame(
-    df, geometry=gpd.points_from_xy(df.x,df.y))
-gdf = gdf.set_crs(crs)
-gdf = gdf.to_crs(ca_boundaries.crs)
-
-# clipped_gdf = clipped_gdf.set_index(['USCB_GEOID'])
-ca_boundaries = ca_boundaries.set_index(['USCB_GEOID'])
-clipped_gdf = gpd.sjoin_nearest(ca_boundaries, gdf, how='left')
-clipped_gdf = clipped_gdf[["geometry","change_ffwi_days"]]
-
-diss_gdf = clipped_gdf.reset_index().dissolve(by='USCB_GEOID', aggfunc='mean')
+# reproject
+ffwi_df = reproject_to_tracts(ds_delta, ca_boundaries)
 
 # -------------------------------------------------------------------------------------------------
 ## Step 4: Min-max standardization
-# Using Cal-CRAI min-max standardization function, available in `utils.calculate_index.py`
-def min_max_standardize(df, cols_to_run_on):
-    '''
-    Calculates min and max values for specified columns, then calculates
-    min-max standardized values.
-
-    Parameters
-    ----------
-    df: DataFrame
-        Input dataframe   
-    cols_to_run_on: list
-        List of columns to calculate min, max, and standardize
-    '''
-    for col in cols_to_run_on:
-        max_value = df[col].max()
-        min_value = df[col].min()
-
-        # Get min-max values, standardize, and add columns to df
-        prefix = col # Extracting the prefix from the column name
-        df[f'{prefix}_min'] = min_value
-        df[f'{prefix}_max'] = max_value
-        df[f'{prefix}_min_max_standardized'] = ((df[col] - min_value) / (max_value - min_value))
-        
-        # note to add checker to make sure new min_max column values arent < 0 >
-        
-        # Drop the original columns
-        df.drop(columns=[col], inplace=True)
-     
-    return df
-
-data_std = min_max_standardize(diss_gdf, cols_to_run_on=['change_ffwi_days'])
+data_std = min_max_standardize(ffwi_df, cols_to_run_on=['change_ffwi_days'])
 
 # -------------------------------------------------------------------------------------------------
 ## Step 5: Export data as csv
