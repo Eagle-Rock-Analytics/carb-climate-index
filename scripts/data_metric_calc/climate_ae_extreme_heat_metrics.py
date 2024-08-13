@@ -57,21 +57,17 @@ sim_name_dict = {
 }
 
 def count_delta_extreme_heat_events(ds_hist,ds_wl):    
-    sim_coord_dict = {
-        'WRF_CESM2_r11i1p1f1_Historical + SSP 3-7.0 -- Business as Usual' :
-        'WRF_CESM2_r11i1p1f1',
-        'WRF_CNRM-ESM2-1_r1i1p1f2_Historical + SSP 3-7.0 -- Business as Usual' :
-        'WRF_CNRM-ESM2-1_r1i1p1f2',
-        'WRF_EC-Earth3-Veg_r1i1p1f1_Historical + SSP 3-7.0 -- Business as Usual' :
-        'WRF_EC-Earth3-Veg_r1i1p1f1',
-        'WRF_FGOALS-g3_r1i1p1f1_Historical + SSP 3-7.0 -- Business as Usual' :
-        'WRF_FGOALS-g3_r1i1p1f1'
-    }                      
+  
+    # define the months over which we are going to 
+    # determine the 98th percentile temperature threshold
+    # to define a hot day or warm night
+    months_to_measure = [m for m in np.arange(4,11,1)]
+    
+    sim_coord_dict = dict(zip(sims_wl,sims_hist))
     
     ds_hist = ds_hist.squeeze()
     ds_wl = ds_wl.squeeze()
     ds_template = ds_hist.isel(time=0, simulation=0).squeeze()
-    
     # first set consistent coordinates
     ds_hist = ds_hist.sortby("simulation")
     ds_wl = ds_wl.rename({"all_sims" : "simulation"})
@@ -79,8 +75,10 @@ def count_delta_extreme_heat_events(ds_hist,ds_wl):
     ds_wl = ds_wl.assign_coords({'simulation': list(sim_coord_dict.values())})
     ds_wl = ds_wl.transpose("simulation","time","y","x")
 
-    # compute 98th percentile historical
-    thresh_ds = ds_hist.chunk(dict(time=-1)).quantile(0.98, dim="time")
+    # compute 98th percentile historical temperature between April and October
+    thresh_ds = ds_hist.sel(
+        time=ds_hist.time.dt.month.isin(months_to_measure)).chunk(
+            dict(time=-1)).quantile(0.98, dim="time")
     # count total days > 98th percentile in historical data and take annual average
     hist_count = xr.where(ds_hist > thresh_ds, x=1, y=0).groupby(
         "time.year").sum().mean(dim="year").mean(dim="simulation")
@@ -93,21 +91,89 @@ def count_delta_extreme_heat_events(ds_hist,ds_wl):
     delta_count = xr.where(np.isnan(ds_template), x=np.nan, y=delta_count)
     return delta_count
 
-def reproject_to_tracts(ds_delta, ca_boundaries):
-    # this step takes about 12 minutes with 3km data (~1 min with 9km data)
+def reproject_to_tracts(ds_delta, ca_boundaries, county):
     df = ds_delta.to_dataframe().reset_index()
     gdf = gpd.GeoDataFrame(
     df, geometry=gpd.points_from_xy(df.x,df.y))
     gdf = gdf.set_crs(crs)
     gdf = gdf.to_crs(ca_boundaries.crs)
-
-    # clipped_gdf = clipped_gdf.set_index(['USCB_GEOID'])
-    ca_boundaries = ca_boundaries.set_index(['USCB_GEOID'])
+    
+    ca_boundaries = ca_boundaries.set_index(['GEOID'])
+    
     clipped_gdf = gpd.sjoin_nearest(ca_boundaries, gdf, how='left')
-    clipped_gdf = clipped_gdf[["geometry",ds_delta.name]]
+    clipped_gdf = clipped_gdf.drop(['index_right'], axis=1)
+    clipped_gdf = clipped_gdf[clipped_gdf["NAME"]==county[0]]
+    ### some coastal tracts do not contain any land grid cells ###
+    ### due to the WRF's underlying surface type for a given grid cell. ###
+    
+    # aggregate the gridded data to the tract level
+    clipped_gdf_diss = clipped_gdf.reset_index().dissolve(
+        by='GEOID', aggfunc='mean')
+    clipped_gdf_diss = clipped_gdf_diss.rename(
+        columns={f"{ds_delta.name}_right":
+                 ds_delta.name}
+    )
+    
+    # separate tracts with data from tracts without data
+    clipped_gdf_nan = clipped_gdf_diss[np.isnan(
+        clipped_gdf_diss[ds_delta.name]
+    )]
+    clipped_gdf_nan = clipped_gdf_nan[["geometry",ds_delta.name]]
+    clipped_gdf_valid = clipped_gdf_diss[~np.isnan(
+        clipped_gdf_diss[ds_delta.name]
+    )]
+    clipped_gdf_valid = clipped_gdf_valid[["geometry",ds_delta.name]]
 
-    diss_gdf = clipped_gdf.reset_index().dissolve(by='USCB_GEOID', aggfunc='mean')
-    return diss_gdf
+    # compute the centroid of each tract
+    clipped_gdf_nan["centroid"] = clipped_gdf_nan.centroid
+    clipped_gdf_nan = clipped_gdf_nan.set_geometry("centroid")
+    clipped_gdf_valid["centroid"] = clipped_gdf_valid.centroid
+    clipped_gdf_valid = clipped_gdf_valid.set_geometry("centroid")
+    
+    # fill in missing tracts with values from the closest tract
+    # in terms of distance between the tract centroids
+    clipped_gdf_filled = clipped_gdf_nan.sjoin_nearest(clipped_gdf_valid, how='left')
+    clipped_gdf_filled = clipped_gdf_filled[["geometry_left",f"{ds_delta.name}_right"]]
+    clipped_gdf_filled = clipped_gdf_filled.rename(columns={
+        "geometry_left":"geometry", f"{ds_delta.name}_right":ds_delta.name
+    })
+    clipped_gdf_valid = clipped_gdf_valid.drop(columns="centroid")
+ 
+    # concatenate filled-in tracts with the original tract which had data
+    gdf_all_tracts = pd.concat([clipped_gdf_valid,clipped_gdf_filled])
+
+    return gdf_all_tracts
+
+def min_max_standardize(df, col):
+    '''
+    Calculates min and max values for specified columns, then calculates
+    min-max standardized values.
+
+    Parameters
+    ----------
+    df: DataFrame
+        Input dataframe   
+    cols_to_run_on: list
+        List of columns to calculate min, max, and standardize
+    '''
+    max_value = df[col].max()
+    min_value = df[col].min()
+
+    # Get min-max values, standardize, and add columns to df
+    prefix = col # Extracting the prefix from the column name
+    df[f'{prefix}_min'] = min_value
+    df[f'{prefix}_max'] = max_value
+    df[f'{prefix}_min_max_standardized'] = ((df[col] - min_value) / (max_value - min_value))
+
+    # checker to make sure new min_max column values arent < 0 > 1
+    df[f'{prefix}_min_max_standardized'].loc[df[f'{prefix}_min_max_standardized'] < 0] = 0
+    df[f'{prefix}_min_max_standardized'].loc[df[f'{prefix}_min_max_standardized'] > 1] = 1
+
+    # Drop the original columns -- we want to keep as a check
+    # df = df.drop(columns=[col])
+     
+    return df
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 1: Retrieve data
@@ -195,62 +261,15 @@ wn_delta_ds.name = "mean_change_annual_warm_nights"
 
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 3: Reproject data to census tract projection
-# read in CA census tiger file -- not working from s3 link, uploading manually to keep testing
-census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/"
-#census_shp_dir = "tl_2021_06_tract.shp"
-ca_boundaries = gpd.read_file(census_shp_dir)
-
-# # need to rename columns so we don't have any duplicates in the final geodatabase
-column_names = ca_boundaries.columns
-new_column_names = ["USCB_"+column for column in column_names if column != "geometry"]
-ca_boundaries = ca_boundaries.rename(columns=dict(zip(column_names, new_column_names)))
-ca_boundaries = ca_boundaries.to_crs(crs=3857) 
-
 # reproject
 hd_df = reproject_to_tracts(hd_delta_ds, ca_boundaries)
 wn_df = reproject_to_tracts(wn_delta_ds, ca_boundaries)
 
-## Check results for hot days -- AE NB
-# hd_df.plot(column = hd_delta_ds.name, legend=True)
-# wn_df.plot(column = wn_delta_ds.name, legend=True)
-
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 4: Min-max standardization
 # Using Cal-CRAI min-max standardization function, available in `utils.calculate_index.py`
-def min_max_standardize(df, col):
-    '''
-    Calculates min and max values for specified columns, then calculates
-    min-max standardized values.
-
-    Parameters
-    ----------
-    df: DataFrame
-        Input dataframe   
-    cols_to_run_on: list
-        List of columns to calculate min, max, and standardize
-    '''
-    max_value = df[col].max()
-    min_value = df[col].min()
-
-    # Get min-max values, standardize, and add columns to df
-    prefix = col # Extracting the prefix from the column name
-    df[f'{prefix}_min'] = min_value
-    df[f'{prefix}_max'] = max_value
-    df[f'{prefix}_min_max_standardized'] = ((df[col] - min_value) / (max_value - min_value))
-
-    # note to add checker to make sure new min_max column values arent < 0 >
-
-    # Drop the original columns
-    # df = df.drop(columns=[col])
-     
-    return df
-
 wn_data_std = min_max_standardize(wn_df, col=wn_delta_ds.name)
 hd_data_std = min_max_standardize(hd_df, col=hd_delta_ds.name)
-
-## Check out standardized hot days and warm nights -- AE NB
-# hd_data_std.plot(column = "mean_change_annual_heat_days_min_max_standardized", legend=True)
-# wn_data_std.plot(column = "mean_change_annual_warm_nights_min_max_standardized", legend=True)
 
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 5: Export data as csv
