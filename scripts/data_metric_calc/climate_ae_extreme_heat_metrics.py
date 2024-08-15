@@ -30,6 +30,13 @@ import pyproj
 import rioxarray as rio
 import xarray as xr
 from bokeh.models import HoverTool
+import os
+import sys
+
+import s3fs
+import boto3
+sys.path.append(os.path.expanduser('../../'))
+from scripts.utils.file_helpers import upload_csv_aws
 
 ## projection information
 import cartopy.crs as ccrs
@@ -45,25 +52,30 @@ crs = ccrs.LambertConformal(
 
 # ----------------------------------------------------------------------------------------------------------------------
 ## Helpful function set-up
-sim_name_dict = {  
-    'WRF_CNRM-ESM2-1_r1i1p1f2_Historical + SSP 3-7.0 -- Business as Usual' :
-    'CNRM-ESM2-1',
-    'WRF_EC-Earth3-Veg_r1i1p1f1_Historical + SSP 3-7.0 -- Business as Usual' :
-    'EC-Earth3-Veg',
-    'WRF_CESM2_r11i1p1f1_Historical + SSP 3-7.0 -- Business as Usual' :
-    'CESM2',
-    'WRF_FGOALS-g3_r1i1p1f1_Historical + SSP 3-7.0 -- Business as Usual' :
-    'FGOALS-g3'
-}
 
-def count_delta_extreme_heat_events(ds_hist,ds_wl):    
+sims_wl = [
+    'WRF_MPI-ESM1-2-HR_r3i1p1f1_Historical + SSP 3-7.0 -- Business as Usual',
+    'WRF_MIROC6_r1i1p1f1_Historical + SSP 3-7.0 -- Business as Usual',
+    'WRF_EC-Earth3_r1i1p1f1_Historical + SSP 3-7.0 -- Business as Usual',
+    'WRF_TaiESM1_r1i1p1f1_Historical + SSP 3-7.0 -- Business as Usual',
+]
+sims_hist = [
+    'WRF_MPI-ESM1-2-HR_r3i1p1f1',
+    'WRF_MIROC6_r1i1p1f1', 
+    'WRF_EC-Earth3_r1i1p1f1',
+    'WRF_TaiESM1_r1i1p1f1', 
+]
+
+sim_name_dict = dict(zip(sims_wl,sims_hist)) 
+
+def count_delta_extreme_heat_events(
+        ds_hist,ds_wl,sim_coord_dict=sim_name_dict
+        ):    
   
     # define the months over which we are going to 
     # determine the 98th percentile temperature threshold
     # to define a hot day or warm night
     months_to_measure = [m for m in np.arange(4,11,1)]
-    
-    sim_coord_dict = dict(zip(sims_wl,sims_hist))
     
     ds_hist = ds_hist.squeeze()
     ds_wl = ds_wl.squeeze()
@@ -102,6 +114,9 @@ def reproject_to_tracts(ds_delta, ca_boundaries):
     
     clipped_gdf = gpd.sjoin_nearest(ca_boundaries, gdf, how='left')
     clipped_gdf = clipped_gdf.drop(['index_right'], axis=1)
+    clipped_gdf = clipped_gdf.reset_index()[
+            ["GEOID",f"{ds_delta.name}","geometry"]]
+
     ### some coastal tracts do not contain any land grid cells ###
     ### due to the WRF's underlying surface type for a given grid cell. ###
     
@@ -221,11 +236,12 @@ selections.variable = 'Maximum air temperature at 2m'
 selections.area_subset = 'states'
 selections.cached_area = ['CA']
 selections.scenario_historical = ['Historical Climate']
-selections.simulation = list(sim_name_dict.values())
+#selections.simulation = list(sim_name_dict.values())
 selections.time_slice = (1981, 2010)
 selections.resolution = '3 km' ## 9km for testing on AE hub
 selections.units = 'degC'
 hist_max_ds = selections.retrieve()
+hist_max_ds = hist_max_ds.sel(simulation=sims_hist)
 
 # min air temperature
 selections.area_average = 'No'
@@ -234,12 +250,12 @@ selections.variable = 'Minimum air temperature at 2m'
 selections.area_subset = 'states'
 selections.cached_area = ['CA']
 selections.scenario_historical = ['Historical Climate']
-selections.simulation = list(sim_name_dict.values())
+#selections.simulation = list(sim_name_dict.values())
 selections.time_slice = (1981, 2010)
 selections.resolution = '3 km' ## 9km for testing on AE hub
 selections.units = 'degC'
 hist_min_ds = selections.retrieve()
-
+hist_min_ds = hist_min_ds.sel(simulation=sims_hist)
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 2: Calculate delta signal
 # Difference between chronic (at 2.0degC warming level) and historical baseline (1981-2010)
@@ -260,7 +276,11 @@ wn_delta_ds.name = "mean_change_annual_warm_nights"
 
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 3: Reproject data to census tract projection
-# reproject
+# load in census tract shapefile
+census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/" 
+ca_boundaries = gpd.read_file(census_shp_dir)
+# convert to area-preserving CRS
+ca_boundaries = ca_boundaries.to_crs(crs=3310)
 hd_df = reproject_to_tracts(hd_delta_ds, ca_boundaries)
 wn_df = reproject_to_tracts(wn_delta_ds, ca_boundaries)
 
@@ -279,5 +299,15 @@ hd_data_std = hd_data_std.drop(columns=['geometry'])
 wn_data_std = wn_data_std.drop(columns=['geometry'])
 
 # export
-wn_data_std.to_csv('climate_extreme_heat_warm_night_metric.csv')
-hd_data_std.to_csv('climate_extreme_heat_hot_day_metric.csv')
+bucket_name = 'ca-climate-index'
+directory = '3_fair_data/index_data'
+
+# warm nights
+wn_fname = 'climate_extreme_heat_warm_night_metric.csv'
+wn_data_std.to_csv(wn_fname)
+upload_csv_aws([wn_fname], bucket_name, directory)
+
+# hot days
+hd_fname='climate_extreme_heat_hot_day_metric.csv'
+hd_data_std.to_csv(hd_fname)
+upload_csv_aws([hd_fname], bucket_name, directory)
