@@ -26,6 +26,13 @@ import pandas as pd
 import numpy as np
 import geopandas as gpd
 
+import os
+import sys
+import s3fs
+import boto3
+sys.path.append(os.path.expanduser('../../'))
+from scripts.utils.file_helpers import upload_csv_aws
+
 import pyproj
 import rioxarray as rio
 import xarray as xr
@@ -44,16 +51,20 @@ crs = ccrs.LambertConformal(
 
 # -------------------------------------------------------------------------------------------------
 # Helpful function set-up
-sim_name_dict = {  
-    'WRF_CNRM-ESM2-1_r1i1p1f2_Historical + SSP 3-7.0 -- Business as Usual' :
-    'CNRM-ESM2-1',
-    'WRF_EC-Earth3-Veg_r1i1p1f1_Historical + SSP 3-7.0 -- Business as Usual' :
-    'EC-Earth3-Veg',
-    'WRF_CESM2_r11i1p1f1_Historical + SSP 3-7.0 -- Business as Usual' :
-    'CESM2',
-    'WRF_FGOALS-g3_r1i1p1f1_Historical + SSP 3-7.0 -- Business as Usual' :
-    'FGOALS-g3'
-}
+sims_wl = [
+    'WRF_MPI-ESM1-2-HR_r3i1p1f1_Historical + SSP 3-7.0 -- Business as Usual',
+    'WRF_MIROC6_r1i1p1f1_Historical + SSP 3-7.0 -- Business as Usual',
+    'WRF_EC-Earth3_r1i1p1f1_Historical + SSP 3-7.0 -- Business as Usual',
+    'WRF_TaiESM1_r1i1p1f1_Historical + SSP 3-7.0 -- Business as Usual',
+]
+sims_hist = [
+    'WRF_MPI-ESM1-2-HR_r3i1p1f1',
+    'WRF_MIROC6_r1i1p1f1', 
+    'WRF_EC-Earth3_r1i1p1f1',
+    'WRF_TaiESM1_r1i1p1f1', 
+]
+
+sim_name_dict = dict(zip(sims_wl,sims_hist)) 
 
 def reproject_to_tracts(ds_delta, ca_boundaries):
     df = ds_delta.to_dataframe().reset_index()
@@ -66,6 +77,8 @@ def reproject_to_tracts(ds_delta, ca_boundaries):
     
     clipped_gdf = gpd.sjoin_nearest(ca_boundaries, gdf, how='left')
     clipped_gdf = clipped_gdf.drop(['index_right'], axis=1)
+    clipped_gdf = clipped_gdf.reset_index()[
+        ["GEOID",f"{ds_delta.name}","geometry"]]
     ### some coastal tracts do not contain any land grid cells ###
     ### due to the WRF's underlying surface type for a given grid cell. ###
     
@@ -159,6 +172,7 @@ wl.wl_params.units = "degF"
 wl.wl_params.anom = "No"
 wl.calculate()
 ds_f = wl.sliced_data["2.0"] # grab 2.0 degC data
+ds_f = ds_f.sel(all_sims = list(sim_name_dict.keys()))
 ds_f = add_dummy_time_to_wl(ds_f) # add time dimension back in, as this is removed by WL and is required for xclim functionality
 
 ## In case FFWI needs to be manually calculated -- testing via FFWI retrieve first
@@ -175,6 +189,7 @@ ds_f = add_dummy_time_to_wl(ds_f) # add time dimension back in, as this is remov
 # wl.wl_params.load_data = False
 # wl.calculate()
 # ds_T = wl.sliced_data["2.0"] # grab 2.0 degC data
+# ds_T = ds_T.sel(all_sims = list(sim_name_dict.keys()))
 # ds_T = add_dummy_time_to_wl(ds_T) # add time dimension back in, as this is removed by WL and is required for xclim functionality
 # ck.export(ds_T, 'ds_T', 'NetCDF') # exports to local file tree on left
 
@@ -183,6 +198,7 @@ ds_f = add_dummy_time_to_wl(ds_f) # add time dimension back in, as this is remov
 # wl.wl_params.units = "[0 to 100]"
 # wl.calculate()
 # ds_RH = wl.sliced_data["2.0"] # grab 2.0 degC data
+# ds_RH = ds_RH.sel(all_sims = list(sim_name_dict.keys()))
 # ds_RH = add_dummy_time_to_wl(ds_RH) # add time dimension back in, as this is removed by WL and is required for xclim functionality
 # ds_RH
 # ck.export(ds_RH, 'ds_RH', 'NetCDF')
@@ -192,6 +208,7 @@ ds_f = add_dummy_time_to_wl(ds_f) # add time dimension back in, as this is remov
 # wl.wl_params.units = "mph"
 # wl.calculate()
 # ds_WS = wl.sliced_data["2.0"] # grab 2.0 degC data
+# ds_WS = ds_WS.sel(all_sims = list(sim_name_dict.keys()))
 # ds_WS = add_dummy_time_to_wl(ds_WS) # add time dimension back in, as this is removed by WL and is required for xclim functionality
 # ck.export(ds_WS, 'ds_WS', 'NetCDF')
 
@@ -207,11 +224,11 @@ selections.variable = 'Fosberg fire weather index'
 selections.area_subset = 'states'
 selections.cached_area = ['CA']
 selections.scenario_historical = ['Historical Climate']
-selections.simulation = list(sim_name_dict.values())
 selections.time_slice = (1981, 2010)
 selections.resolution = '3 km' ## 45km for testing on AE hub
 selections.units = 'degF'
 hist_ds = selections.retrieve()
+hist_ds = hist_ds.sel(simulation = sims_hist)
 
 # -------------------------------------------------------------------------------------------------
 ## Step 2: Calculate delta signal
@@ -227,6 +244,11 @@ ds_delta.name = "change_ffwi_days" # assign name so it can convert to pd.DataFra
 # -------------------------------------------------------------------------------------------------
 ## Step 3: Reproject data to census tract projection
 # reproject
+# load in census tract shapefile
+census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/" 
+ca_boundaries = gpd.read_file(census_shp_dir)
+# convert to area-preserving CRS
+ca_boundaries = ca_boundaries.to_crs(crs=3310)
 ffwi_df = reproject_to_tracts(ds_delta, ca_boundaries)
 
 # -------------------------------------------------------------------------------------------------
@@ -240,4 +262,9 @@ data_std = min_max_standardize(ffwi_df, cols_to_run_on=['change_ffwi_days'])
 data_std = data_std.drop(columns=['geometry'])
 
 # export
-data_std.to_csv('climate_wildfire_ffwi_metric.csv')
+bucket_name = 'ca-climate-index'
+directory = '3_fair_data/index_data'
+
+metric_fname = 'climate_wildfire_ffwi_metric.csv'
+data_std.to_csv(metric_fname)
+upload_csv_aws([metric_fname], bucket_name, directory)
