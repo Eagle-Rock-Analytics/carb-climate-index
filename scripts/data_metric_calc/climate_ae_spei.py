@@ -51,6 +51,8 @@ from climakitae.explore import warming_levels
 from climakitae.util.utils import add_dummy_time_to_wl
 import xarray as xr
 import pandas as pd
+import numpy as np
+import geopandas as gpd
 from xclim.indices import (
     potential_evapotranspiration, 
     standardized_precipitation_evapotranspiration_index,
@@ -267,8 +269,8 @@ precip_hist = precip_hist.sel(simulation=sims_hist)
 
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 2: Calculate metric
-# GWL model-mean # drought years/30 - historical model-mean # drought years/30
-def calculate_spei(tasmin, tasmax, precip):
+# GWL model-mean # drought years - historical model-mean # drought years
+def calculate_wb(tasmin, tasmax, precip):
     # first calculate PET
     pet = potential_evapotranspiration(tasmin=tasmin, tasmax=tasmax, method='HG85')
     pet = pet * (60*60*24) # convert from per second to per day
@@ -298,10 +300,13 @@ def calculate_spei(tasmin, tasmax, precip):
     wb = xr.concat(da_list, dim='simulation')
     wb = wb.chunk(dict(time=-1)).compute()
     
-    # finally calculate 3 month SPEI
+    return wb
+
+def calculate_spei(wb, wb_cal):
+    # calculate 3 month SPEI
     spei = standardized_precipitation_evapotranspiration_index(
         wb=wb, 
-        wb_cal=wb,
+        wb_cal=wb_cal,
         freq='MS',
         window=3,
         dist='gamma',
@@ -315,26 +320,46 @@ def calculate_spei(tasmin, tasmax, precip):
     return spei
 
 # now calculate number of drought years from SPEI
-def drought_yrs(spei):
+def drought_yrs(spei):   
     mod_dry_thresh = -1.0
     drought_duration_thresh = 6 # 3 months = short-term drought; 6+ = long-term
-    num_dry_months = (spei <= mod_dry_thresh).groupby('water_year').sum('time', skipna=True)
-    num_dry_years = (num_dry_months >= drought_duration_thresh).sum('water_year', skipna=True)
-        
+    num_dry_months = (spei <= mod_dry_thresh).groupby('water_year').sum('time')
+    num_dry_years = (num_dry_months >= drought_duration_thresh).sum('water_year')
     # take model average
-    num_dry_years_avg = num_dry_years.mean(dim=['simulation']).squeeze()
+    num_dry_years_avg = num_dry_years.mean(dim=['simulation']).squeeze() 
+    
+    # make a nan mask
+    nan_mask = spei.isel(simulation=0, time=-1).squeeze()
+    # nan out grid points outside of the domain
+    num_dry_years_avg = xr.where(np.isnan(nan_mask), x=np.nan, y=num_dry_years_avg)
     
     return num_dry_years_avg
 
-spei_wl = calculate_spei(
+# Calculate water budget for historical data.
+# This will also serve as our calibration water budget for the warming levels data.
+wb_hist = calculate_wb(
+    tasmin = min_t_hist,
+    tasmax = max_t_hist,
+    precip = precip_hist
+)
+
+# Calculate water budget for warming levels data.
+wb_wl = calculate_wb(
     tasmin = ds_minT,
     tasmax = ds_maxT,
     precip = ds_precip
 )
+
+# Calculate historical SPEI using itself as the calibration water budget
 spei_hist = calculate_spei(
-    tasmin = min_t_hist,
-    tasmax = max_t_hist,
-    precip = precip_hist
+    wb = wb_hist,
+    wb_cal = wb_hist
+)
+
+# Calculate warming levels SPEI using the historical water budget for the calibration water budget
+spei_wl = calculate_spei(
+    wb = wb_wl,
+    wb_cal = wb_hist
 )
 
 drought_yrs_wl = drought_yrs(spei_wl)
