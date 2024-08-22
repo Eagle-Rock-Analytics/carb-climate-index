@@ -83,7 +83,7 @@ sims_hist = [
 
 sim_name_dict = dict(zip(sims_wl,sims_hist)) 
 
-def reproject_to_tracts(ds_delta, ca_boundaries):
+def reproject_to_tracts(ds_delta, ca_boundaries, county):
     df = ds_delta.to_dataframe().reset_index()
     gdf = gpd.GeoDataFrame(
     df, geometry=gpd.points_from_xy(df.x,df.y))
@@ -168,73 +168,94 @@ def min_max_standardize(df, col):
      
     return df
 
+# Step 0: Load in shapefiles
+# load in census tract shapefile
+census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/" 
+ca_boundaries = gpd.read_file(census_shp_dir)
+ca_counties_dir = "s3://ca-climate-index/0_map_data/ca_counties/"
+ca_counties = gpd.read_file(ca_counties_dir)
+ca_counties = ca_counties.to_crs(ca_boundaries.crs)
+# clean up and convert to area-preserving CRS
+ca_boundaries = ca_boundaries[["COUNTYFP","GEOID","geometry"]]
+ca_boundaries = pd.merge(ca_boundaries,ca_counties[["COUNTYFP","NAME"]],on="COUNTYFP")
+ca_boundaries = ca_boundaries.to_crs(crs=3310) 
+
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 1: Retrieve data
 # We need to calculate:
 # 30 year centered around 2.0C warming level (SSP3-7.0)
 # Historical baseline 1981-2010 (Historical Climate)
 
-## Step 1a) Chronic data (2.0degC WL)
-wl = warming_levels()
-wl.wl_params.timescale = "hourly"
-wl.wl_params.downscaling_method = "Dynamical"
-wl.wl_params.variable = "Air Temperature at 2m"
-wl.wl_params.area_subset = "states"
-wl.wl_params.cached_area = ["CA"]
-wl.wl_params.warming_levels = ["2.0"]
-wl.wl_params.units = "degF"
-wl.wl_params.resolution = "3 km" # 9km for testing on AE hub
-wl.wl_params.anom = "No"
-wl.calculate()
-ds = wl.sliced_data["2.0"] # grab 2.0 degC data
-ds = ds.sel(all_sims = list(sim_name_dict.keys()))
-ds = add_dummy_time_to_wl(ds) # add time dimension back in, as this is removed by WL and is required for xclim functionality
+# We do this county-by-county since this is so much data!
+df_list = []
 
+for county in ca_boundaries["NAME"].unique():
 
-## Step 1b) Historical baseline data (1981-2010)
-selections = ck.Select()
-selections.area_average = 'No'
-selections.timescale = 'hourly'
-selections.variable = 'Air Temperature at 2m'
-selections.area_subset = 'states'
-selections.cached_area = ['CA']
-selections.scenario_historical = ['Historical Climate']
-selections.time_slice = (1981, 2010)
-selections.resolution = '3 km' ## 9km for testing on AE hub
-selections.units = 'degC'
-hist_ds = selections.retrieve()
-hist_ds = hist_ds.sel(simulation=sims_hist)
+    # get bounding box for county + small tolerance to avoid missing data
+    county_bounds = ca_counties[ca_counties.NAME == county].bounds
+    minx = county_bounds.minx.values[0] - 0.1
+    maxx = county_bounds.maxx.values[0] + 0.1
+    miny = county_bounds.miny.values[0] - 0.1
+    maxy = county_bounds.maxy.values[0] + 0.1
 
-# ----------------------------------------------------------------------------------------------------------------------
-## Step 2: Calculate delta signal
-# Difference between chronic (at 2.0degC warming level) and historical baseline (1981-2010)
-# calculate metric -- subset for Nov 1 - Feb 28/29 (excluding March 1)
-winter_months = [11, 12, 1, 2]
-ds_winter = ds.isel(time=ds.time.dt.month.isin(winter_months))
-ds_winter_hist = hist_ds.isel(time=hist_ds.time.dt.month.isin(winter_months))
-
-# using 45 and under model
-chill_threshold = 45
-ds_winter_proj = (ds_winter <= chill_threshold).groupby('time.year').sum('time')
-ds_winter_proj = ds_winter_proj.mean(dim='all_sims').mean(dim='year').squeeze()
-
-ds_winter_hist = (ds_winter_hist <= chill_threshold).groupby('time.year').sum('time')
-ds_winter_hist = ds_winter_hist.mean(dim='simulation').mean(dim='year').squeeze()
-
-# calculate delta
-ds_delta = ds_winter_proj - ds_winter_hist
-ds_delta.name = "change_chill_hours" # assign name
-
-# ----------------------------------------------------------------------------------------------------------------------
-## Step 3: Reproject data to census tract projection
-# reproject
-# load in census tract shapefile
-census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/" 
-ca_boundaries = gpd.read_file(census_shp_dir)
-# convert to area-preserving CRS
-ca_boundaries = ca_boundaries.to_crs(crs=3310)
-chill_df = reproject_to_tracts(ds_delta, ca_boundaries)
-
+    ## Step 1a) Chronic data (2.0degC WL)
+    wl = warming_levels()
+    wl.wl_params.timescale = "hourly"
+    wl.wl_params.downscaling_method = "Dynamical"
+    wl.wl_params.variable = "Air Temperature at 2m"
+    wl.wl_params.latitude = (miny, maxy)
+    wl.wl_params.longitude = (minx, maxx)
+    wl.wl_params.warming_levels = ["2.0"]
+    wl.wl_params.units = "degF"
+    wl.wl_params.resolution = "3 km" # 9km for testing on AE hub
+    wl.wl_params.anom = "No"
+    wl.calculate()
+    ds = wl.sliced_data["2.0"] # grab 2.0 degC data
+    ds = ds.sel(all_sims = list(sim_name_dict.keys()))
+    ds = add_dummy_time_to_wl(ds) # add time dimension back in, as this is removed by WL and is required for xclim functionality
+    
+    
+    ## Step 1b) Historical baseline data (1981-2010)
+    selections = ck.Select()
+    selections.area_average = 'No'
+    selections.timescale = 'hourly'
+    selections.variable = 'Air Temperature at 2m'
+    selections.latitude = (miny, maxy)
+    selections.longitude = (minx, maxx)
+    selections.scenario_historical = ['Historical Climate']
+    selections.time_slice = (1981, 2010)
+    selections.resolution = '3 km' ## 9km for testing on AE hub
+    selections.units = 'degC'
+    hist_ds = selections.retrieve()
+    hist_ds = hist_ds.sel(simulation=sims_hist)
+    
+    # ----------------------------------------------------------------------------------------------------------------------
+    ## Step 2: Calculate delta signal
+    # Difference between chronic (at 2.0degC warming level) and historical baseline (1981-2010)
+    # calculate metric -- subset for Nov 1 - Feb 28/29 (excluding March 1)
+    winter_months = [11, 12, 1, 2]
+    ds_winter = ds.isel(time=ds.time.dt.month.isin(winter_months))
+    ds_winter_hist = hist_ds.isel(time=hist_ds.time.dt.month.isin(winter_months))
+    
+    # using 45 and under model
+    chill_threshold = 45
+    ds_winter_proj = (ds_winter <= chill_threshold).groupby('time.year').sum('time')
+    ds_winter_proj = ds_winter_proj.mean(dim='all_sims').mean(dim='year').squeeze()
+    
+    ds_winter_hist = (ds_winter_hist <= chill_threshold).groupby('time.year').sum('time')
+    ds_winter_hist = ds_winter_hist.mean(dim='simulation').mean(dim='year').squeeze()
+    
+    # calculate delta
+    ds_delta = ds_winter_proj - ds_winter_hist
+    ds_delta.name = "change_chill_hours" # assign name
+    
+    # ----------------------------------------------------------------------------------------------------------------------
+    ## Step 3: Reproject data to census tract projection
+    # reproject   
+    df = reproject_to_tracts(ds_delta, ca_boundaries, county)
+    df_list.append(df)
+    
+chill_df = pd.concat(df_list)
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 4: Min-max standardization
 # Using Cal-CRAI min-max standardization function, available in `utils.calculate_index.py`
