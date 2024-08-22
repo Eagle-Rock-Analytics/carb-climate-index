@@ -1,3 +1,5 @@
+import pandas as pd
+
 def weight_domains(df, society, built, natural):
     '''
     Calculates the weighting scheme, based on input parameters:
