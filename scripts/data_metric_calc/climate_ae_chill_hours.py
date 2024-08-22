@@ -94,7 +94,8 @@ def reproject_to_tracts(ds_delta, ca_boundaries, county):
     
     clipped_gdf = gpd.sjoin_nearest(ca_boundaries, gdf, how='left')
     clipped_gdf = clipped_gdf.drop(['index_right'], axis=1)
-    glipped_gdf = clipped_gdf.reset_index()[
+    clipped_gdf = clipped_gdf[clipped_gdf["NAME"]==county]
+    clipped_gdf = clipped_gdf.reset_index()[
         ["GEOID",f"{ds_delta.name}","geometry"]]
 
     ### some coastal tracts do not contain any land grid cells ###
@@ -186,10 +187,14 @@ ca_boundaries = ca_boundaries.to_crs(crs=3310)
 # 30 year centered around 2.0C warming level (SSP3-7.0)
 # Historical baseline 1981-2010 (Historical Climate)
 
+winter_months = [11, 12, 1, 2]
+# use 45 degree threshold
+chill_threshold = 45 
 # We do this county-by-county since this is so much data!
 df_list = []
 
 for county in ca_boundaries["NAME"].unique():
+    print(f"Starting calculation for {county} County")
 
     # get bounding box for county + small tolerance to avoid missing data
     county_bounds = ca_counties[ca_counties.NAME == county].bounds
@@ -214,7 +219,15 @@ for county in ca_boundaries["NAME"].unique():
     ds = ds.sel(all_sims = list(sim_name_dict.keys()))
     ds = add_dummy_time_to_wl(ds) # add time dimension back in, as this is removed by WL and is required for xclim functionality
     
+    # Calculate chill hours for warming levels data before getting historical data to save memory
+    ds_winter = ds.isel(time=ds.time.dt.month.isin(winter_months))
+    ds_winter_proj = (ds_winter <= chill_threshold).groupby('time.year').sum('time') 
+    ds_winter_proj = ds_winter_proj.mean(dim='all_sims').mean(dim='year').squeeze()
     
+    # Clear memory
+    ds = None
+    ds_winter = None
+
     ## Step 1b) Historical baseline data (1981-2010)
     selections = ck.Select()
     selections.area_average = 'No'
@@ -229,21 +242,17 @@ for county in ca_boundaries["NAME"].unique():
     hist_ds = selections.retrieve()
     hist_ds = hist_ds.sel(simulation=sims_hist)
     
+    # Calculate chill hours for historical data
+    ds_winter_hist = hist_ds.isel(time=hist_ds.time.dt.month.isin(winter_months))
+    ds_winter_hist = (ds_winter_hist <= chill_threshold).groupby('time.year').sum('time')
+    ds_winter_hist = ds_winter_hist.mean(dim='simulation').mean(dim='year').squeeze()
+
+    # Clear memory
+    hist_ds = None
     # ----------------------------------------------------------------------------------------------------------------------
     ## Step 2: Calculate delta signal
     # Difference between chronic (at 2.0degC warming level) and historical baseline (1981-2010)
     # calculate metric -- subset for Nov 1 - Feb 28/29 (excluding March 1)
-    winter_months = [11, 12, 1, 2]
-    ds_winter = ds.isel(time=ds.time.dt.month.isin(winter_months))
-    ds_winter_hist = hist_ds.isel(time=hist_ds.time.dt.month.isin(winter_months))
-    
-    # using 45 and under model
-    chill_threshold = 45
-    ds_winter_proj = (ds_winter <= chill_threshold).groupby('time.year').sum('time')
-    ds_winter_proj = ds_winter_proj.mean(dim='all_sims').mean(dim='year').squeeze()
-    
-    ds_winter_hist = (ds_winter_hist <= chill_threshold).groupby('time.year').sum('time')
-    ds_winter_hist = ds_winter_hist.mean(dim='simulation').mean(dim='year').squeeze()
     
     # calculate delta
     ds_delta = ds_winter_proj - ds_winter_hist
@@ -254,6 +263,12 @@ for county in ca_boundaries["NAME"].unique():
     # reproject   
     df = reproject_to_tracts(ds_delta, ca_boundaries, county)
     df_list.append(df)
+
+    # Clear up some memory
+    ds_winter_hist = None
+    ds_winter_proj = None
+    ds_delta = None
+    df = None
     
 chill_df = pd.concat(df_list)
 # ----------------------------------------------------------------------------------------------------------------------
