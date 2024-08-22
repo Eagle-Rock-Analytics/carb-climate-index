@@ -337,8 +337,8 @@ spei_hist = calculate_spei(
     precip = precip_hist
 )
 
-drought_yrs_wl = drought_yrs(spei_wl)/30
-drought_yrs_hist = drought_yrs(spei_hist)/30
+drought_yrs_wl = drought_yrs(spei_wl)
+drought_yrs_hist = drought_yrs(spei_hist)
 
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 3: Calculate delta signal
