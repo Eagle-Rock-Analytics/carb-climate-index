@@ -193,7 +193,8 @@ chill_threshold = 45
 # We do this county-by-county since this is so much data!
 df_list = []
 
-for county in ca_boundaries["NAME"].unique():
+#for county in ca_boundaries["NAME"].unique():
+for county in ["Sacramento"]:
     print(f"Starting calculation for {county} County")
 
     # get bounding box for county + small tolerance to avoid missing data
@@ -208,8 +209,10 @@ for county in ca_boundaries["NAME"].unique():
     wl.wl_params.timescale = "hourly"
     wl.wl_params.downscaling_method = "Dynamical"
     wl.wl_params.variable = "Air Temperature at 2m"
-    wl.wl_params.latitude = (miny, maxy)
-    wl.wl_params.longitude = (minx, maxx)
+    wl.wl_params.area_subset = "CA counties"
+    wl.wl_params.cached_area = [f"{county} County"]
+   # wl.wl_params.latitude = (miny, maxy)
+   # wl.wl_params.longitude = (minx, maxx)
     wl.wl_params.warming_levels = ["2.0"]
     wl.wl_params.units = "degF"
     wl.wl_params.resolution = "3 km" # 9km for testing on AE hub
@@ -233,8 +236,10 @@ for county in ca_boundaries["NAME"].unique():
     selections.area_average = 'No'
     selections.timescale = 'hourly'
     selections.variable = 'Air Temperature at 2m'
-    selections.latitude = (miny, maxy)
-    selections.longitude = (minx, maxx)
+    selections.area_subset = "CA counties"
+    selections.cached_area = [f"{county} County"]  
+   # selections.latitude = (miny, maxy)
+   # selections.longitude = (minx, maxx)
     selections.scenario_historical = ['Historical Climate']
     selections.time_slice = (1981, 2010)
     selections.resolution = '3 km' ## 9km for testing on AE hub
@@ -274,7 +279,7 @@ chill_df = pd.concat(df_list)
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 4: Min-max standardization
 # Using Cal-CRAI min-max standardization function, available in `utils.calculate_index.py`
-data_std = min_max_standardize(chill_df, cols_to_run_on=['change_chill_hours'])
+data_std = min_max_standardize(chill_df, col='change_chill_hours')
 
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 5: Export data as csv
