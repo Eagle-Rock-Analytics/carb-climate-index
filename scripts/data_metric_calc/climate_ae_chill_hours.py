@@ -84,6 +84,7 @@ sims_hist = [
 sim_name_dict = dict(zip(sims_wl,sims_hist)) 
 
 def reproject_to_tracts(ds_delta, ca_boundaries, county):
+    ca_boundaries = ca_boundaries.to_crs(crs=3310) # area-preserving CA Albers
     df = ds_delta.to_dataframe().reset_index()
     gdf = gpd.GeoDataFrame(
     df, geometry=gpd.points_from_xy(df.x,df.y))
@@ -179,7 +180,7 @@ ca_counties = ca_counties.to_crs(ca_boundaries.crs)
 # clean up and convert to area-preserving CRS
 ca_boundaries = ca_boundaries[["COUNTYFP","GEOID","geometry"]]
 ca_boundaries = pd.merge(ca_boundaries,ca_counties[["COUNTYFP","NAME"]],on="COUNTYFP")
-ca_boundaries = ca_boundaries.to_crs(crs=3310) 
+ca_boundaries = ca_boundaries.to_crs(crs=crs) 
 
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 1: Retrieve data
@@ -194,7 +195,7 @@ chill_threshold = 45
 df_list = []
 
 #for county in ca_boundaries["NAME"].unique():
-for county in ["Sacramento"]:
+for county in ["Fresno"]:
     print(f"Starting calculation for {county} County")
 
     # get bounding box for county + small tolerance to avoid missing data
@@ -204,18 +205,20 @@ for county in ["Sacramento"]:
     miny = county_bounds.miny.values[0] - 0.1
     maxy = county_bounds.maxy.values[0] + 0.1
 
+    print(minx, maxx, miny, maxy)
+
     ## Step 1a) Chronic data (2.0degC WL)
     wl = warming_levels()
     wl.wl_params.timescale = "hourly"
     wl.wl_params.downscaling_method = "Dynamical"
     wl.wl_params.variable = "Air Temperature at 2m"
-    wl.wl_params.area_subset = "CA counties"
-    wl.wl_params.cached_area = [f"{county} County"]
-   # wl.wl_params.latitude = (miny, maxy)
-   # wl.wl_params.longitude = (minx, maxx)
+    #wl.wl_params.area_subset = "CA counties"
+    #wl.wl_params.cached_area = [f"{county} County"]
+    wl.wl_params.latitude = (miny, maxy)
+    wl.wl_params.longitude = (minx, maxx)
     wl.wl_params.warming_levels = ["2.0"]
     wl.wl_params.units = "degF"
-    wl.wl_params.resolution = "3 km" # 9km for testing on AE hub
+    wl.wl_params.resolution = "9 km" # 9km for testing on AE hub
     wl.wl_params.anom = "No"
     wl.calculate()
     ds = wl.sliced_data["2.0"] # grab 2.0 degC data
@@ -236,14 +239,14 @@ for county in ["Sacramento"]:
     selections.area_average = 'No'
     selections.timescale = 'hourly'
     selections.variable = 'Air Temperature at 2m'
-    selections.area_subset = "CA counties"
-    selections.cached_area = [f"{county} County"]  
-   # selections.latitude = (miny, maxy)
-   # selections.longitude = (minx, maxx)
+   # selections.area_subset = "CA counties"
+   # selections.cached_area = [f"{county} County"]  
+    selections.latitude = (miny, maxy)
+    selections.longitude = (minx, maxx)
     selections.scenario_historical = ['Historical Climate']
     selections.time_slice = (1981, 2010)
-    selections.resolution = '3 km' ## 9km for testing on AE hub
-    selections.units = 'degC'
+    selections.resolution = '9 km' ## 9km for testing on AE hub
+    selections.units = 'degF'
     hist_ds = selections.retrieve()
     hist_ds = hist_ds.sel(simulation=sims_hist)
     
