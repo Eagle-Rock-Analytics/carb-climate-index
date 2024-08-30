@@ -183,12 +183,13 @@ def min_max_standardize(df, col):
 # * 30 year centered around 2.0C warming level (SSP3-7.0)
 # * Historical baseline 1981-2010 (Historical Climate)
 
+res = '9 km'
 ## Step 1a) Chronic data (2.0°C WL)
 wl = warming_levels()
 # max air temperature
 wl.wl_params.timescale = "daily"
 wl.wl_params.downscaling_method = "Dynamical"
-wl.wl_params.resolution = '3 km'
+wl.wl_params.resolution = res
 wl.wl_params.variable = 'Maximum air temperature at 2m'
 wl.wl_params.area_subset = "states" 
 wl.wl_params.cached_area = ["CA"]
@@ -196,13 +197,13 @@ wl.wl_params.warming_levels = ["2.0"]
 wl.wl_params.anom = "No"
 wl.calculate()
 ds_maxT = wl.sliced_data["2.0"] # grab 2.0 degC data
-ds_maxT = ds_maxT.sel(all_sims = list(sim_name_dict.keys()))
+#ds_maxT = ds_maxT.sel(all_sims = list(sim_name_dict.keys()))
 ds_maxT = add_dummy_time_to_wl(ds_maxT) # add time dimension back in, as this is removed by WL and is required for xclim functionality
 
 # min air temperature
 wl.wl_params.timescale = "daily"
 wl.wl_params.downscaling_method = "Dynamical"
-wl.wl_params.resolution = '3 km'
+wl.wl_params.resolution = res
 wl.wl_params.variable = 'Minimum air temperature at 2m'
 wl.wl_params.area_subset = "states" 
 wl.wl_params.cached_area = ["CA"]
@@ -210,13 +211,13 @@ wl.wl_params.warming_levels = ["2.0"]
 wl.wl_params.anom = "No"
 wl.calculate()
 ds_minT = wl.sliced_data["2.0"] # grab 2.0 degC data
-ds_minT = ds_minT.sel(all_sims = list(sim_name_dict.keys()))
+#ds_minT = ds_minT.sel(all_sims = list(sim_name_dict.keys()))
 ds_minT = add_dummy_time_to_wl(ds_minT) # add time dimension back in, as this is removed by WL and is required for xclim functionality
 
 # precip
 wl.wl_params.timescale = "daily"
 wl.wl_params.downscaling_method = "Dynamical"
-wl.wl_params.resolution = '3 km'
+wl.wl_params.resolution = res
 wl.wl_params.variable = 'Precipitation (total)'
 wl.wl_params.area_subset = "states" 
 wl.wl_params.cached_area = ["CA"]
@@ -224,9 +225,10 @@ wl.wl_params.warming_levels = ["2.0"]
 wl.wl_params.anom = "No"
 wl.calculate()
 ds_precip = wl.sliced_data["2.0"]
-ds_precip = ds_precip.sel(all_sims = list(sim_name_dict.keys()))
+#ds_precip = ds_precip.sel(all_sims = list(sim_name_dict.keys()))
 ds_precip = add_dummy_time_to_wl(ds_precip)
-ds_precip = ds_precip.clip(min=1.)
+ds_precip = ds_precip.clip(min=0.)
+#ds_precip = xr.where(cond=ds_precip['Precipitation (total)'] < 1., x=0., y=ds_precip['Precipitation (total)'])
 
 
 ## Retrieve historical baseline data (1981-2010)
@@ -238,9 +240,9 @@ selections.cached_area = ["CA"]
 selections.scenario_historical=['Historical Climate']
 selections.area_average = 'No'
 selections.time_slice = (1981,2010) 
-selections.resolution = '3 km'
+selections.resolution = res
 max_t_hist = selections.retrieve()
-max_t_hist = max_t_hist.sel(simulation=sims_hist)
+#max_t_hist = max_t_hist.sel(simulation=sims_hist)
 
 # now min temperature
 selections.timescale = 'daily'
@@ -250,9 +252,9 @@ selections.cached_area = ["CA"]
 selections.scenario_historical=['Historical Climate']
 selections.area_average = 'No'
 selections.time_slice = (1981,2010) 
-selections.resolution = '3 km'
+selections.resolution = res
 min_t_hist = selections.retrieve()
-min_t_hist = min_t_hist.sel(simulation=sims_hist)
+#min_t_hist = min_t_hist.sel(simulation=sims_hist)
 
 # also need precip
 selections.timescale = 'daily'
@@ -262,10 +264,12 @@ selections.cached_area = ["CA"]
 selections.scenario_historical=['Historical Climate']
 selections.area_average = 'No'
 selections.time_slice = (1981,2010) 
-selections.resolution = '3 km'
+selections.resolution = res
 precip_hist = selections.retrieve()
-precip_hist = precip_hist.clip(min=1.)
-precip_hist = precip_hist.sel(simulation=sims_hist)
+precip_hist = precip_hist.clip(min=0.)
+#precip_hist = precip_hist.sel(simulation=sims_hist)
+#precip_hist = xr.where(cond=precip_hist['Precipitation (total)'] < 1., x=0., y=precip_hist['Precipitation (total)'])
+#precip_hist = precip_hist.sel(simulation=sims_hist)
 
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 2: Calculate metric
@@ -283,17 +287,26 @@ def calculate_wb(tasmin, tasmax, precip):
     # handing for simulation/all_sims dimension between historical and wl data
     da_list = []
     
+    # need positive values for water balance only
+    # since the gamma distribution used for SPEI cannot accept negative ones. 
+    # This is addressed in two parts:
+    # 1. First we add the absolute value of the minimum water budget value
+    # to the entire array of each simulation's data. But we have to remove a small
+    # amount from this minimum since the xclim SPEI requires an offset value.
+    # 2. Then we add an additional offset of 1.000 mm/day when calling the SPEI function.
     if 'simulation' in wb.dims:
         for sim in wb.simulation.values:
             da = wb.sel(simulation=sim)
-            wb_min = da.min().values
+            wb_min = (da.min().values) 
+            print(wb_min)
             da = da+abs(wb_min)
             da_list.append(da)
     
     elif 'all_sims' in wb.dims:
         for sim in wb.all_sims.values:
             da = wb.sel(all_sims=sim)
-            wb_min = da.min().values
+            wb_min = (da.min().values)
+            print(wb_min)
             da = da+abs(wb_min)
             da_list.append(da)
             
@@ -311,6 +324,7 @@ def calculate_spei(wb, wb_cal):
         window=3,
         dist='gamma',
         method='APP',
+        offset='0.000 mm/day'
     )
     
     # assign water year coordinate
@@ -349,19 +363,20 @@ wb_wl = calculate_wb(
     tasmax = ds_maxT,
     precip = ds_precip
 )
+print("water budgets done")
 
 # Calculate historical SPEI using itself as the calibration water budget
 spei_hist = calculate_spei(
     wb = wb_hist,
     wb_cal = wb_hist
 )
-
+print("historical spei done")
 # Calculate warming levels SPEI using the historical water budget for the calibration water budget
 spei_wl = calculate_spei(
     wb = wb_wl,
     wb_cal = wb_hist
 )
-
+print("spei done")
 drought_yrs_wl = drought_yrs(spei_wl)
 drought_yrs_hist = drought_yrs(spei_hist)
 
@@ -371,7 +386,7 @@ drought_yrs_hist = drought_yrs(spei_hist)
 ds_delta = drought_yrs_wl - drought_yrs_hist
 ds_delta.name = "change_in_drought_years" # assign name so it can convert to pd.DataFrame
 ds_delta = ck.load(ds_delta)
-
+print("delta calculated")
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 4: Reproject data to census tract projection
 # load in census tract shapefile
