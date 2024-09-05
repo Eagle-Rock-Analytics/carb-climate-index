@@ -279,59 +279,39 @@ def calculate_wb(tasmin, tasmax, precip):
     pet = potential_evapotranspiration(tasmin=tasmin, tasmax=tasmax, method='HG85')
     pet = pet * (60*60*24) # convert from per second to per day
     pet.attrs['units'] = 'mm'
-    
     # calculate water budget
     wb = precip - pet
     wb.attrs['units'] = 'mm/day'
-    
-    # handing for simulation/all_sims dimension between historical and wl data
-    da_list = []
-    
-    # need positive values for water balance only
-    # since the gamma distribution used for SPEI cannot accept negative ones. 
-    # This is addressed in two parts:
-    # 1. First we add the absolute value of the minimum water budget value
-    # to the entire array of each simulation's data. But we have to remove a small
-    # amount from this minimum since the xclim SPEI requires an offset value.
-    # 2. Then we add an additional offset of 1.000 mm/day when calling the SPEI function.
-    if 'simulation' in wb.dims:
-        for sim in wb.simulation.values:
-            da = wb.sel(simulation=sim)
-            wb_min = (da.min().values) 
-            print(wb_min)
-            da = da+abs(wb_min)
-            da_list.append(da)
-    
-    elif 'all_sims' in wb.dims:
-        for sim in wb.all_sims.values:
-            da = wb.sel(all_sims=sim)
-            wb_min = (da.min().values)
-            print(wb_min)
-            da = da+abs(wb_min)
-            da_list.append(da)
-            
-    wb = xr.concat(da_list, dim='simulation')
     wb = wb.chunk(dict(time=-1)).compute()
-    
     return wb
 
-def calculate_spei(wb, wb_cal):
-    # calculate 3 month SPEI
-    spei = standardized_precipitation_evapotranspiration_index(
-        wb=wb, 
-        wb_cal=wb_cal,
-        freq='MS',
-        window=3,
-        dist='gamma',
-        method='APP',
-        offset='0.000 mm/day'
-    )
+def calculate_spei(wb):
     
+    hist0 = '1981-01-01'
+    hist1 = '2010-12-31'   
+    da_list = []
+    for sim in wb.simulation.values:
+        da = wb.sel(simulation=sim)
+        wb_min = da.min().values
+        offset = abs(wb_min)
+        # finally calculate 3 month SPEI
+        spei = standardized_precipitation_evapotranspiration_index(
+            wb=da, 
+            wb_cal=da.sel(time=slice(hist0, hist1)),
+            offset=offset,
+            freq='MS',
+            window=3,
+            dist='fisk',
+            method='ML',
+        )
+        spei.name = "spei"
+        # return spei
+        da_list.append(spei) 
+    spei_ds = xr.concat(da_list,dim="simulation")
     # assign water year coordinate
-    water_year = (spei.time.dt.month >= 10) + spei.time.dt.year
-    spei.coords['water_year'] = water_year
-    
-    return spei
+    water_year = (spei_ds.time.dt.month >= 10) + spei_ds.time.dt.year
+    spei_ds.coords['water_year'] = water_year    
+    return spei_ds
 
 # now calculate number of drought years from SPEI
 def drought_yrs(spei):   
@@ -340,45 +320,33 @@ def drought_yrs(spei):
     num_dry_months = (spei <= mod_dry_thresh).groupby('water_year').sum('time')
     num_dry_years = (num_dry_months >= drought_duration_thresh).sum('water_year')
     # take model average
-    num_dry_years_avg = num_dry_years.mean(dim=['simulation']).squeeze() 
-    
+    num_dry_years_avg = num_dry_years.mean(dim=['simulation']).squeeze()   
     # make a nan mask
     nan_mask = spei.isel(simulation=0, time=-1).squeeze()
     # nan out grid points outside of the domain
-    num_dry_years_avg = xr.where(np.isnan(nan_mask), x=np.nan, y=num_dry_years_avg)
-    
+    num_dry_years_avg = xr.where(np.isnan(nan_mask), x=np.nan, y=num_dry_years_avg)    
     return num_dry_years_avg
 
-# Calculate water budget for historical data.
-# This will also serve as our calibration water budget for the warming levels data.
-wb_hist = calculate_wb(
-    tasmin = min_t_hist,
-    tasmax = max_t_hist,
-    precip = precip_hist
-)
+## Calculate water budget
 
-# Calculate water budget for warming levels data.
-wb_wl = calculate_wb(
-    tasmin = ds_minT,
-    tasmax = ds_maxT,
-    precip = ds_precip
-)
-print("water budgets done")
+# Concatenate the historical and warming levels data
+# apply new dummy time vector which follows the historical period
+new_dummy_time = pd.date_range("2011-01-01", freq="1D", periods=10950)
+wb_wl = wb_wl.assign_coords({'time': new_dummy_time})
+# change simulation names so we can line them up
+wb_wl = wb_wl.rename({"all_sims" : "simulation"})
+wb_wl = wb_wl.assign_coords({'simulation': list(sim_name_dict.values())})
+# And now concatenate the historical and warming levels datasets
+wb_ds = xr.concat([wb_hist, wb_wl], dim="time")
 
-# Calculate historical SPEI using itself as the calibration water budget
-spei_hist = calculate_spei(
-    wb = wb_hist,
-    wb_cal = wb_hist
-)
-print("historical spei done")
-# Calculate warming levels SPEI using the historical water budget for the calibration water budget
-spei_wl = calculate_spei(
-    wb = wb_wl,
-    wb_cal = wb_hist
-)
-print("spei done")
-drought_yrs_wl = drought_yrs(spei_wl)
+# Calculate the SPEI
+spei_ds = calculate_spei(wb_ds)
+
+# Count the number of drought years for historical and warming level periods
+spei_hist = spei_ds.sel(time=slice('1981-01-01','2010-12-31'))
 drought_yrs_hist = drought_yrs(spei_hist)
+spei_wl = spei_ds.sel(time=slice('2011-01-01','2040-12-31'))
+drought_yrs_wl = drought_yrs(spei_wl)
 
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 3: Calculate delta signal
