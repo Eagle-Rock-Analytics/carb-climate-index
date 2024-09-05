@@ -4,6 +4,25 @@ import glob
 import numpy as np
 
 def process_domain_csv_files(prefix, output_folder, meta_csv, merged_output_file):
+    '''
+    Pulls metric csv files based on domain prefix variable and merges all together based on shared GEOID column. NaN values within the GEOID column are removed and infinite values (if any) in other columns are adjusted to NaN values. Lastly, an uninhabited island tract is also given NaN metric values.
+
+    Parameters
+    ----------
+    prefix: str
+        Shared prefix for the desired domain csv files to call in:
+            'society_'
+            'built_'
+            'governance_'
+            'climate_'  
+    output_folder: str
+        name of the folder to store pulled domain csv files
+    meta_csv: str
+        local path to the metadata pipeline
+    merged_output_file: str
+        desired name of merged output csv file
+    '''
+
     # Create the output folder if it doesn't exist
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -124,8 +143,6 @@ def process_domain_csv_files(prefix, output_folder, meta_csv, merged_output_file
     merged_df.to_csv(merged_output_file, index=False)
 
     print(f"Processed CSV saved as {merged_output_file}")
-
-
 
 def weight_domains(df, society, built, natural):
     '''
@@ -315,7 +332,8 @@ def compute_averaged_indicators(df, metric_to_indicator_dict):
     
     # Reorder the columns to have 'GEOID' as the first column
     avg_indicator_metrics = avg_indicator_metrics[['GEOID'] + [col for col in avg_indicator_metrics.columns if col != 'GEOID']]
-    
+    print(avg_indicator_metrics)
+   
     return avg_indicator_metrics
 
 def compute_summed_indicators(df, columns_to_sum):
