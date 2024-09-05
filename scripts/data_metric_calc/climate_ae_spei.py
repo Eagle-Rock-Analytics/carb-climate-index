@@ -183,7 +183,9 @@ def min_max_standardize(df, col):
 # * 30 year centered around 2.0C warming level (SSP3-7.0)
 # * Historical baseline 1981-2010 (Historical Climate)
 
-res = '9 km'
+res = '3 km'
+area_subset = "states"
+cached_area = ["CA"]
 ## Step 1a) Chronic data (2.0°C WL)
 wl = warming_levels()
 # max air temperature
@@ -191,13 +193,13 @@ wl.wl_params.timescale = "daily"
 wl.wl_params.downscaling_method = "Dynamical"
 wl.wl_params.resolution = res
 wl.wl_params.variable = 'Maximum air temperature at 2m'
-wl.wl_params.area_subset = "states" 
-wl.wl_params.cached_area = ["CA"]
+wl.wl_params.area_subset = area_subset 
+wl.wl_params.cached_area = cached_area
 wl.wl_params.warming_levels = ["2.0"]
 wl.wl_params.anom = "No"
 wl.calculate()
 ds_maxT = wl.sliced_data["2.0"] # grab 2.0 degC data
-#ds_maxT = ds_maxT.sel(all_sims = list(sim_name_dict.keys()))
+ds_maxT = ds_maxT.sel(all_sims = list(sim_name_dict.keys()))
 ds_maxT = add_dummy_time_to_wl(ds_maxT) # add time dimension back in, as this is removed by WL and is required for xclim functionality
 
 # min air temperature
@@ -205,13 +207,13 @@ wl.wl_params.timescale = "daily"
 wl.wl_params.downscaling_method = "Dynamical"
 wl.wl_params.resolution = res
 wl.wl_params.variable = 'Minimum air temperature at 2m'
-wl.wl_params.area_subset = "states" 
-wl.wl_params.cached_area = ["CA"]
+wl.wl_params.area_subset = area_subset 
+wl.wl_params.cached_area = cached_area
 wl.wl_params.warming_levels = ["2.0"]
 wl.wl_params.anom = "No"
 wl.calculate()
 ds_minT = wl.sliced_data["2.0"] # grab 2.0 degC data
-#ds_minT = ds_minT.sel(all_sims = list(sim_name_dict.keys()))
+ds_minT = ds_minT.sel(all_sims = list(sim_name_dict.keys()))
 ds_minT = add_dummy_time_to_wl(ds_minT) # add time dimension back in, as this is removed by WL and is required for xclim functionality
 
 # precip
@@ -219,57 +221,53 @@ wl.wl_params.timescale = "daily"
 wl.wl_params.downscaling_method = "Dynamical"
 wl.wl_params.resolution = res
 wl.wl_params.variable = 'Precipitation (total)'
-wl.wl_params.area_subset = "states" 
-wl.wl_params.cached_area = ["CA"]
+wl.wl_params.area_subset = area_subset 
+wl.wl_params.cached_area = cached_area
 wl.wl_params.warming_levels = ["2.0"]
 wl.wl_params.anom = "No"
 wl.calculate()
 ds_precip = wl.sliced_data["2.0"]
-#ds_precip = ds_precip.sel(all_sims = list(sim_name_dict.keys()))
+ds_precip = ds_precip.sel(all_sims = list(sim_name_dict.keys()))
 ds_precip = add_dummy_time_to_wl(ds_precip)
 ds_precip = ds_precip.clip(min=0.)
-#ds_precip = xr.where(cond=ds_precip['Precipitation (total)'] < 1., x=0., y=ds_precip['Precipitation (total)'])
-
 
 ## Retrieve historical baseline data (1981-2010)
 selections = ck.Select()
 selections.timescale = 'daily'
 selections.variable = 'Maximum air temperature at 2m'
-selections.area_subset = "states" 
-selections.cached_area = ["CA"]
+selections.area_subset = area_subset 
+selections.cached_area = cached_area
 selections.scenario_historical=['Historical Climate']
 selections.area_average = 'No'
 selections.time_slice = (1981,2010) 
 selections.resolution = res
 max_t_hist = selections.retrieve()
-#max_t_hist = max_t_hist.sel(simulation=sims_hist)
+max_t_hist = max_t_hist.sel(simulation=sims_hist)
 
 # now min temperature
 selections.timescale = 'daily'
 selections.variable = 'Minimum air temperature at 2m'
-selections.area_subset = "states" 
-selections.cached_area = ["CA"]
+selections.area_subset = area_subset 
+selections.cached_area = cached_area
 selections.scenario_historical=['Historical Climate']
 selections.area_average = 'No'
 selections.time_slice = (1981,2010) 
 selections.resolution = res
 min_t_hist = selections.retrieve()
-#min_t_hist = min_t_hist.sel(simulation=sims_hist)
+min_t_hist = min_t_hist.sel(simulation=sims_hist)
 
 # also need precip
 selections.timescale = 'daily'
 selections.variable = 'Precipitation (total)'
-selections.area_subset = "states" 
-selections.cached_area = ["CA"]
+selections.area_subset = area_subset 
+selections.cached_area = cached_area
 selections.scenario_historical=['Historical Climate']
 selections.area_average = 'No'
 selections.time_slice = (1981,2010) 
 selections.resolution = res
 precip_hist = selections.retrieve()
 precip_hist = precip_hist.clip(min=0.)
-#precip_hist = precip_hist.sel(simulation=sims_hist)
-#precip_hist = xr.where(cond=precip_hist['Precipitation (total)'] < 1., x=0., y=precip_hist['Precipitation (total)'])
-#precip_hist = precip_hist.sel(simulation=sims_hist)
+precip_hist = precip_hist.sel(simulation=sims_hist)
 
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 2: Calculate metric
@@ -293,7 +291,7 @@ def calculate_spei(wb):
     for sim in wb.simulation.values:
         da = wb.sel(simulation=sim)
         wb_min = da.min().values
-        offset = abs(wb_min)
+        offset = str(abs(wb_min))+" mm/day"
         # finally calculate 3 month SPEI
         spei = standardized_precipitation_evapotranspiration_index(
             wb=da, 
@@ -328,7 +326,8 @@ def drought_yrs(spei):
     return num_dry_years_avg
 
 ## Calculate water budget
-
+wb_hist = calculate_wb(min_t_hist, max_t_hist, precip_hist)
+wb_wl = calculate_wb(ds_minT, ds_maxT, ds_precip)
 # Concatenate the historical and warming levels data
 # apply new dummy time vector which follows the historical period
 new_dummy_time = pd.date_range("2011-01-01", freq="1D", periods=10950)
