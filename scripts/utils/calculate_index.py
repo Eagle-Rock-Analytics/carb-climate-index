@@ -16,11 +16,11 @@ def process_domain_csv_files(prefix, output_folder, meta_csv, merged_output_file
             'governance_'
             'climate_'  
     output_folder: str
-        name of the folder to store pulled domain csv files
+        Name of the folder to store pulled domain csv files.
     meta_csv: str
-        local path to the metadata pipeline
+        Local path to the metadata pipeline.
     merged_output_file: str
-        desired name of merged output csv file
+        Desired name of merged output csv file.
     '''
 
     # Create the output folder if it doesn't exist
@@ -32,6 +32,11 @@ def process_domain_csv_files(prefix, output_folder, meta_csv, merged_output_file
 
     # Get the list of metric file names and corresponding 'High value result' entries
     metric_files = df[['Metric file name', 'High value result (vulnerable or resilient)']]
+
+    # Dictionary to hold metric column names categorized by 'vulnerable' and 'resilient'
+    #global metric_vulnerable_resilient_dict
+    metric_vulnerable_resilient_dict = {'vulnerable': [], 'resilient': []}
+
 
     # Find all CSV files starting with the provided prefix and matching the metric file names
     source_files = [file for file in glob.glob(f'{prefix}*.csv') if os.path.basename(file) in metric_files['Metric file name'].values]
@@ -47,8 +52,8 @@ def process_domain_csv_files(prefix, output_folder, meta_csv, merged_output_file
         # Get the last column name
         last_column = csv_df.columns[-1]
 
-        # Append the column result to the last column name
-        csv_df.rename(columns={last_column: f"{last_column}_{column_result}"}, inplace=True)
+        # Add the column name to the corresponding category in the dictionary
+        metric_vulnerable_resilient_dict[column_result].append(last_column)
 
         # Construct the destination file path
         destination_path = os.path.join(output_folder, os.path.basename(file))
@@ -60,15 +65,9 @@ def process_domain_csv_files(prefix, output_folder, meta_csv, merged_output_file
         os.remove(file)
 
     print(f"Processed and saved {len(source_files)} CSV files.")
-
-    # Delete all CSV files in the current directory that are not in the output folder
-    current_files = glob.glob('*.csv')
-    for file in current_files:
-        if file not in [os.path.basename(f) for f in source_files]:
-            os.remove(file)
-
-    print(f"Deleted {len(current_files) - len(source_files)} local non-relevant CSV files.")
-    print('')
+    print("Metrics categorized as follows:")
+    print('Metric resilience/vulnerable dictionary called: metric_vulnerable_resilient_dict')
+    print(metric_vulnerable_resilient_dict)
 
     # --- Additional Processing: Merging CSV Files ---
 
@@ -119,6 +118,7 @@ def process_domain_csv_files(prefix, output_folder, meta_csv, merged_output_file
 
     merged_df['GEOID'] = merged_df['GEOID'].apply(lambda x: '0' + str(x))
     merged_df['GEOID'] = merged_df['GEOID'].astype(str).apply(lambda x: x.rstrip('0').rstrip('.') if '.' in x else x)
+
     # Selecting only numeric columns
     numeric_df = merged_df.select_dtypes(include=[np.number])
 
@@ -131,18 +131,17 @@ def process_domain_csv_files(prefix, output_folder, meta_csv, merged_output_file
     # Replace infinite values with NaN
     merged_df.replace([np.inf, -np.inf], np.nan, inplace=True)
 
-    # Selecting only numeric columns
-    numeric_df = merged_df.select_dtypes(include=[np.number])
-
-    # Counting infinite values
+    # Counting infinite values after replacement
     num_infinite = np.isinf(numeric_df).sum().sum()
-    print(f"Number of infinite entries in the DataFrame: {num_infinite}")
+    print(f"Number of infinite entries in the DataFrame after replacement: {num_infinite}")
 
     print(f"\nFile processing complete, dataframe will now be saved as a .csv")
+    
     # Save the merged DataFrame to a CSV file
     merged_df.to_csv(merged_output_file, index=False)
 
     print(f"Processed CSV saved as {merged_output_file}")
+    return metric_vulnerable_resilient_dict
 
 def weight_domains(df, society, built, natural):
     '''
