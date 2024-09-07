@@ -112,8 +112,10 @@ def process_domain_csv_files(prefix, output_folder, meta_csv, merged_output_file
     # Check if all entries within the island tract are NaN
     island_row = merged_df.loc[merged_df['GEOID'] == island_tract]
     if island_row.iloc[:, 1:].isnull().all().all():
+        print('')
         print(f"All entries within the island tract ({island_tract}) are NaN.")
     else:
+        print('')
         print(f"Some entries within the island tract ({island_tract}) are not NaN.")
 
     merged_df['GEOID'] = merged_df['GEOID'].apply(lambda x: '0' + str(x))
@@ -130,6 +132,9 @@ def process_domain_csv_files(prefix, output_folder, meta_csv, merged_output_file
 
     # Replace infinite values with NaN
     merged_df.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+    # Selecting only numeric columns
+    numeric_df = merged_df.select_dtypes(include=[np.number])
 
     # Counting infinite values after replacement
     num_infinite = np.isinf(numeric_df).sum().sum()
