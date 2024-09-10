@@ -49,6 +49,7 @@
 import climakitae as ck
 from climakitae.explore import warming_levels 
 from climakitae.util.utils import add_dummy_time_to_wl
+from climakitae.core.data_interface import DataParameters
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -229,10 +230,10 @@ wl.calculate()
 ds_precip = wl.sliced_data["2.0"]
 ds_precip = ds_precip.sel(all_sims = list(sim_name_dict.keys()))
 ds_precip = add_dummy_time_to_wl(ds_precip)
-ds_precip = ds_precip.clip(min=0.)
+ds_precip = ds_precip.clip(min=0.1)
 
 ## Retrieve historical baseline data (1981-2010)
-selections = ck.Select()
+selections = DataParameters()
 selections.timescale = 'daily'
 selections.variable = 'Maximum air temperature at 2m'
 selections.area_subset = area_subset 
@@ -266,7 +267,7 @@ selections.area_average = 'No'
 selections.time_slice = (1981,2010) 
 selections.resolution = res
 precip_hist = selections.retrieve()
-precip_hist = precip_hist.clip(min=0.)
+precip_hist = precip_hist.clip(min=0.1)
 precip_hist = precip_hist.sel(simulation=sims_hist)
 
 # ----------------------------------------------------------------------------------------------------------------------
