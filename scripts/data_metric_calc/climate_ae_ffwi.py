@@ -22,6 +22,7 @@ import climakitae as ck
 from climakitae.explore import warming_levels 
 from climakitae.util.utils import add_dummy_time_to_wl
 from climakitae.tools.indices import fosberg_fire_index
+from climakitae.core.data_interface import DataParameters
 import pandas as pd
 import numpy as np
 import geopandas as gpd
@@ -156,6 +157,9 @@ def min_max_standardize(df, col):
 # * 30 year centered around 2.0C warming level (SSP3-7.0)
 # * Historical baseline 1981-2010 (Historical Climate) 
 
+area_subset = "CA counties"
+cached_area = "Nevada County"
+res = "9 km"
 ## Step 1a) Chronic data (2.0°C WL)
 wl = warming_levels()
 
@@ -164,9 +168,9 @@ wl.wl_params.variable_type = 'Derived Index'
 wl.wl_params.variable = 'Fosberg fire weather index'
 wl.wl_params.timescale = "hourly"
 wl.wl_params.downscaling_method = "Dynamical"
-wl.wl_params.resolution = '3 km' # must test in 45 km on Hub
-wl.wl_params.area_subset = "states"
-wl.wl_params.cached_area = ["CA"]
+wl.wl_params.resolution = res # must test in 45 km on Hub
+wl.wl_params.area_subset = area_subset
+wl.wl_params.cached_area = [cached_area]
 wl.wl_params.warming_levels = ["2.0"]
 wl.wl_params.units = "degF"
 wl.wl_params.anom = "No"
@@ -216,16 +220,16 @@ ds_f = add_dummy_time_to_wl(ds_f) # add time dimension back in, as this is remov
 # ds_ffwi = fosberg_fire_index(t2_F=ds_T, rh_percent=ds_RH, windspeed_mph=ds_WS)
 
 ## Step 1b) Historical baseline data (1981-2010)
-selections = ck.Select()
+selections = DataParameters()
 selections.area_average = 'No'
 selections.timescale = 'hourly'
 selections.variable_type = 'Derived Index'
 selections.variable = 'Fosberg fire weather index'
-selections.area_subset = 'states'
-selections.cached_area = ['CA']
+selections.area_subset = area_subset
+selections.cached_area = cached_area
 selections.scenario_historical = ['Historical Climate']
 selections.time_slice = (1981, 2010)
-selections.resolution = '3 km' ## 45km for testing on AE hub
+selections.resolution = res ## 45km for testing on AE hub
 selections.units = 'degF'
 hist_ds = selections.retrieve()
 hist_ds = hist_ds.sel(simulation = sims_hist)
