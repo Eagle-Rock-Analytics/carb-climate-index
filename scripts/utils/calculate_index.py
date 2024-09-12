@@ -193,7 +193,7 @@ def format_df(df):
 
     return df
 
-def handle_outliers(df, output_csv):
+def handle_outliers(df, domain_prefix, summary_stats=True, print_all_vals=False):
     # Columns to process (exclude 'GEOID')
     columns_to_process = [col for col in df.columns if col != 'GEOID']
     
@@ -215,21 +215,23 @@ def handle_outliers(df, output_csv):
         max_fence = Q3 * 3
         min_fence = Q1 * -3
 
-        print(f'For column {column}:')
-        print(f'  Q1 (25th percentile): {Q1}')
-        print(f'  Q3 (75th percentile): {Q3}')
-        print(f'  IQR: {IQR}')
-        print(f'  Max fence: {max_fence}')
-        print(f'  Min fence: {min_fence}')
+        if summary_stats:
+            print(f'For column {column}:')
+            print(f'  Q1 (25th percentile): {Q1}')
+            print(f'  Q3 (75th percentile): {Q3}')
+            print(f'  IQR: {IQR}')
+            print(f'  Max fence: {max_fence}')
+            print(f'  Min fence: {min_fence}')
 
         # Identify outliers
         outliers = df[(df[column] > max_fence) | (df[column] < min_fence)]
         
         # Print outliers and their corresponding 'GEOID'
         if not outliers.empty:
-            print(f"Outliers detected in column '{column}':")
-            for _, row in outliers.iterrows():
-                print(f"GEOID: {row['GEOID']}, value: {row[column]}")
+            if print_all_vals: # if all values printed to screen is desired
+                print(f"Outliers detected in column '{column}':")
+                for _, row in outliers.iterrows():
+                    print(f"   GEOID: {row['GEOID']}, value: {row[column]}")
 
         # Count the number of adjustments
         count_adjusted = df[(df[column] > max_fence) | (df[column] < min_fence)].shape[0]
@@ -239,12 +241,16 @@ def handle_outliers(df, output_csv):
         df[column] = df[column].clip(lower=min_fence, upper=max_fence)
     
     # Save the updated DataFrame back to CSV
-    df.to_csv(output_csv, index=False)
+    # close out
+    handle_outlier_csv = "no_outlier_{}metrics.csv".format(domain_prefix)
+    print(f"Processed and saved {handle_outlier_csv} with outlier handling.")
+    df.to_csv(handle_outlier_csv, index=False)
     
     # Print the adjusted counts
-    print("Number of rows adjusted per column:")
-    for column, count in adjusted_counts.items():
-        print(f"  {column}: {count}")
+    if summary_stats:
+        print("Number of rows adjusted per column:")
+        for column, count in adjusted_counts.items():
+            print(f"  {column}: {count}")
 
     return df
 
