@@ -1,7 +1,64 @@
 import pandas as pd
 import os
+import sys
 import glob
 import numpy as np
+import geopandas as gpd
+import matplotlib.pyplot as plt
+
+# metric to indicator dictionaries
+def indicator_dicts(domain):
+    metric_to_indicator_society_dict = {
+        'vulnerable_populations' : ['asthma', 
+                                    'cardiovascular_disease', 
+                                    'birth_weight',
+                                    'education',
+                                    'linguistic',
+                                    'poverty', 
+                                    'unemployment',
+                                    'housing_burden',
+                                    'imp_water_bodies',
+                                    'homeless',
+                                    'health_insurance',
+                                    'ambulatory_disabilities',
+                                    'cognitive_disabilities',
+                                    'air conditioning',
+                                    'Violent Crimes',
+                                    'working outdoors', 
+                                    '1miurban_10mirural',
+                                    'american_indian',
+                                    'over_65',
+                                    'under_5',
+                                    'household_financial_assistance'],
+
+                'social_services' : ['blood',
+                                    'hospitals',
+                                    'care store',
+                                    'engineering',
+                                    'specialty trade',
+                                    'repair',
+                                    'mental_shortage',
+                                    'primary_care',
+                                    'narcotic'],
+
+                'economic_health' : ['gini',
+                                    'median_income',
+                                    'hachman'] 
+    }
+
+    if domain == 'society':
+        return metric_to_indicator_society_dict
+    elif domain == 'natural':
+        return metric_to_indicator_natural_dict
+    elif domain == 'built':
+        return metric_to_indicator_built_dict
+    elif domain == 'governance':
+        return metric_to_indicator_governance_dict
+    elif domain == 'climate':
+        return metric_to_indicator_climate_dict
+
+
+
 
 def process_domain_csv_files(prefix, output_folder, meta_csv, merged_output_file):
     '''
@@ -338,7 +395,7 @@ def compute_averaged_indicators(df, metric_to_indicator_dict):
     
     # Reorder the columns to have 'GEOID' as the first column
     avg_indicator_metrics = avg_indicator_metrics[['GEOID'] + [col for col in avg_indicator_metrics.columns if col != 'GEOID']]
-    print(avg_indicator_metrics)
+    # print(avg_indicator_metrics)
    
     return avg_indicator_metrics
 
@@ -379,8 +436,36 @@ def compute_summed_indicators(df, columns_to_sum):
     summed_indicators_df = summed_indicators_df[['GEOID', 'summed_indicators_society_economy_domain']]
 
     # Print the resulting DataFrame (optional)
-    print(summed_indicators_df)
-    print('min value:', summed_indicators_df['summed_indicators_society_economy_domain'].min())
-    print('max value:', summed_indicators_df['summed_indicators_society_economy_domain'].max())
+    # print(summed_indicators_df)
+    print('Indicator sum min value:', summed_indicators_df['summed_indicators_society_economy_domain'].min())
+    print('Indicator sum max value:', summed_indicators_df['summed_indicators_society_economy_domain'].max())
 
     return summed_indicators_df
+
+
+def add_census_tracts(df):
+    '''merges the census tract boundaries to the processed dataframe'''
+
+    # read in census tracts
+    census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/"
+    ca_boundaries = gpd.read_file(census_shp_dir)
+    ca_boundaries['GEOID'] = ca_boundaries['GEOID'].astype(str)
+
+    # merge to df
+    df_merge = df.merge(ca_boundaries, on='GEOID')
+
+    # conver to correct CRS
+    gdf = gpd.GeoDataFrame(df_merge, geometry='geometry', crs=4269)
+
+    return gdf
+
+
+def domain_summary_stats(gdf, domain):
+    # locate the min-max standardized column
+    if domain == 'society_':
+        domain = 'society_economy'
+    col = f'summed_indicators_{domain}_domain_min_max_standardized'
+
+    # summary stats
+    print(f'Median {domain} domain value: {gdf[col].median()}')
+    print(f'Mean {domain} domain value: {gdf[col].mean()}')
