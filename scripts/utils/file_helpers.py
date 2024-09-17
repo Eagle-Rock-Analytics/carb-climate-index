@@ -27,7 +27,7 @@ def list_webdir(url, ext=''):
     return [url + '/' + node.get('href') for node in soup.find_all('a') if node.get('href').endswith(ext)]
 
 
-def pull_csv_from_directory(bucket_name, directory, search_zipped=True):
+def pull_csv_from_directory(bucket_name, directory, search_zipped=True, print_name=True):
     """
     Pulls CSV files from a specified directory in an S3 bucket.
     
@@ -35,6 +35,7 @@ def pull_csv_from_directory(bucket_name, directory, search_zipped=True):
     - bucket_name (str): The name of the S3 bucket.
     - directory (str): The directory within the bucket to search for CSV files.
     - search_zipped (bool): If True, search for CSV files within zip files. If False, search for CSV files directly.
+    - print_name (bool): If True, will print all filenames. If False, nothing is printed. 
     """
     # Create an S3 client
     s3 = boto3.client('s3')
@@ -68,7 +69,8 @@ def pull_csv_from_directory(bucket_name, directory, search_zipped=True):
                                 # Save the DataFrame with a similar name as the .csv file
                                 df_name = file_name[:-4]  # Remove .csv extension
                                 df.to_csv(f"{df_name}.csv", index=False)
-                                print(f"Saved DataFrame as '{df_name}.csv'")
+                                if print_name:
+                                    print(f"Saved DataFrame as '{df_name}.csv'")
                                 # You can now manipulate df as needed
             elif not search_zipped and key.endswith('.csv'):
                 # Directly download the CSV file
@@ -79,8 +81,12 @@ def pull_csv_from_directory(bucket_name, directory, search_zipped=True):
                 # Save the DataFrame with a similar name as the .csv file
                 df_name = key.split('/')[-1][:-4]  # Extract filename from key
                 df.to_csv(f"{df_name}.csv", index=False)
-                print(f"Saved DataFrame as '{df_name}.csv'")
+                if print_name:
+                    print(f"Saved DataFrame as '{df_name}.csv'")
                 # You can now manipulate df as needed
+            
+        if print_name == False:
+            print(f"Metric data retrieved from {directory}.")
 
     else:
         print("No objects found in the specified directory.")
