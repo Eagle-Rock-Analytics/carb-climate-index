@@ -251,9 +251,44 @@ def format_df(df):
     return df
 
 def handle_outliers(df, domain_prefix, summary_stats=True, print_all_vals=False):
-    # Columns to process (exclude 'GEOID')
-    columns_to_process = [col for col in df.columns if col != 'GEOID']
+
+    metric_columns_to_skip = {
+        'vulnerable_populations' : ['asthma', 
+                                    'cardiovascular_disease', 
+                                    'birth_weight',
+                                    'education',
+                                    'linguistic',
+                                    'poverty', 
+                                    'unemployment',
+                                    'housing_burden',
+                                    'imp_water_bodies',
+                                    'homeless',
+                                    'health_insurance',
+                                    'ambulatory_disabilities',
+                                    'cognitive_disabilities',
+                                    'air conditioning',
+                                    'Violent Crimes',
+                                    'working outdoors', 
+                                    '1miurban_10mirural',
+                                    'american_indian',
+                                    'over_65',
+                                    'under_5',
+                                    'household_financial_assistance']
+                                    }
     
+    # Flatten the dictionary to get a list of words to skip
+    words_to_skip = set(word for sublist in metric_columns_to_skip.values() for word in sublist)
+    
+    # Convert all columns except 'GEOID' to numeric
+    for column in df.columns:
+        if column != 'GEOID':
+            df[column] = pd.to_numeric(df[column], errors='coerce')
+
+    # Columns to process (exclude 'GEOID' and those containing words to skip)
+    columns_to_process = [
+        col for col in df.columns 
+        if col != 'GEOID' and not any(word in col for word in words_to_skip)
+    ]
     # Dictionary to store counts of adjusted rows
     adjusted_counts = {}
 
@@ -261,8 +296,8 @@ def handle_outliers(df, domain_prefix, summary_stats=True, print_all_vals=False)
         # Convert the column to numeric, forcing any errors to NaN
         df[column] = pd.to_numeric(df[column], errors='coerce')
         
-        Q1 = df[column].quantile(0.25)
-        Q3 = df[column].quantile(0.75)
+        Q1 = df[column].quantile(0.10)
+        Q3 = df[column].quantile(0.90)
         IQR = Q3 - Q1
 
         if IQR == 0:
@@ -274,8 +309,8 @@ def handle_outliers(df, domain_prefix, summary_stats=True, print_all_vals=False)
 
         if summary_stats:
             print(f'For column {column}:')
-            print(f'  Q1 (25th percentile): {Q1}')
-            print(f'  Q3 (75th percentile): {Q3}')
+            print(f'  Q1 (10th percentile): {Q1}')
+            print(f'  Q3 (90th percentile): {Q3}')
             print(f'  IQR: {IQR}')
             print(f'  Max fence: {max_fence}')
             print(f'  Min fence: {min_fence}')
