@@ -27,18 +27,23 @@ def list_webdir(url, ext=''):
     return [url + '/' + node.get('href') for node in soup.find_all('a') if node.get('href').endswith(ext)]
 
 
-def pull_csv_from_directory(bucket_name, directory, search_zipped=True, print_name=True):
+def pull_csv_from_directory(bucket_name, directory, output_folder, search_zipped=True, print_name=True):
     """
-    Pulls CSV files from a specified directory in an S3 bucket.
+    Pulls CSV files from a specified directory in an S3 bucket and saves them to a designated output folder.
     
     Parameters:
     - bucket_name (str): The name of the S3 bucket.
     - directory (str): The directory within the bucket to search for CSV files.
+    - output_folder (str): The folder where the CSV files will be saved.
     - search_zipped (bool): If True, search for CSV files within zip files. If False, search for CSV files directly.
     - print_name (bool): If True, will print all filenames. If False, nothing is printed. 
     """
     # Create an S3 client
     s3 = boto3.client('s3')
+
+    # Create the output folder if it doesn't exist
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
 
     # List objects in the specified directory
     response = s3.list_objects_v2(Bucket=bucket_name, Prefix=directory)
@@ -66,24 +71,22 @@ def pull_csv_from_directory(bucket_name, directory, search_zipped=True, print_na
                             with zip_ref.open(file_name) as csv_file:
                                 # Convert the csv content to pandas DataFrame
                                 df = pd.read_csv(csv_file)
-                                # Save the DataFrame with a similar name as the .csv file
-                                df_name = file_name[:-4]  # Remove .csv extension
+                                # Save the DataFrame to the output folder with a similar name as the .csv file
+                                df_name = os.path.join(output_folder, file_name[:-4])  # Remove .csv extension and save in folder
                                 df.to_csv(f"{df_name}.csv", index=False)
                                 if print_name:
                                     print(f"Saved DataFrame as '{df_name}.csv'")
-                                # You can now manipulate df as needed
             elif not search_zipped and key.endswith('.csv'):
                 # Directly download the CSV file
                 csv_object = s3.get_object(Bucket=bucket_name, Key=key)
                 csv_data = io.BytesIO(csv_object['Body'].read())
                 # Convert the csv content to pandas DataFrame
                 df = pd.read_csv(csv_data)
-                # Save the DataFrame with a similar name as the .csv file
-                df_name = key.split('/')[-1][:-4]  # Extract filename from key
+                # Save the DataFrame to the output folder with a similar name as the .csv file
+                df_name = os.path.join(output_folder, key.split('/')[-1][:-4])  # Extract filename from key and save in folder
                 df.to_csv(f"{df_name}.csv", index=False)
                 if print_name:
                     print(f"Saved DataFrame as '{df_name}.csv'")
-                # You can now manipulate df as needed
             
         if print_name == False:
             print(f"Metric data retrieved from {directory}.")
