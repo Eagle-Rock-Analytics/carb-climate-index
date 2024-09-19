@@ -49,6 +49,7 @@
 import climakitae as ck
 from climakitae.explore import warming_levels 
 from climakitae.util.utils import add_dummy_time_to_wl
+from climakitae.core.data_interface import DataParameters
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -184,6 +185,8 @@ def min_max_standardize(df, col):
 # * Historical baseline 1981-2010 (Historical Climate)
 
 res = '9 km'
+area_subset = "states"
+cached_area = ["CA"]
 ## Step 1a) Chronic data (2.0°C WL)
 wl = warming_levels()
 # max air temperature
@@ -191,13 +194,14 @@ wl.wl_params.timescale = "daily"
 wl.wl_params.downscaling_method = "Dynamical"
 wl.wl_params.resolution = res
 wl.wl_params.variable = 'Maximum air temperature at 2m'
-wl.wl_params.area_subset = "states" 
-wl.wl_params.cached_area = ["CA"]
+wl.wl_params.area_subset = area_subset 
+wl.wl_params.cached_area = cached_area
 wl.wl_params.warming_levels = ["2.0"]
 wl.wl_params.anom = "No"
 wl.calculate()
 ds_maxT = wl.sliced_data["2.0"] # grab 2.0 degC data
-#ds_maxT = ds_maxT.sel(all_sims = list(sim_name_dict.keys()))
+print(ds_maxT.all_sims.values)
+ds_maxT = ds_maxT.sel(all_sims = list(sim_name_dict.keys()))
 ds_maxT = add_dummy_time_to_wl(ds_maxT) # add time dimension back in, as this is removed by WL and is required for xclim functionality
 
 # min air temperature
@@ -205,13 +209,13 @@ wl.wl_params.timescale = "daily"
 wl.wl_params.downscaling_method = "Dynamical"
 wl.wl_params.resolution = res
 wl.wl_params.variable = 'Minimum air temperature at 2m'
-wl.wl_params.area_subset = "states" 
-wl.wl_params.cached_area = ["CA"]
+wl.wl_params.area_subset = area_subset 
+wl.wl_params.cached_area = cached_area
 wl.wl_params.warming_levels = ["2.0"]
 wl.wl_params.anom = "No"
 wl.calculate()
 ds_minT = wl.sliced_data["2.0"] # grab 2.0 degC data
-#ds_minT = ds_minT.sel(all_sims = list(sim_name_dict.keys()))
+ds_minT = ds_minT.sel(all_sims = list(sim_name_dict.keys()))
 ds_minT = add_dummy_time_to_wl(ds_minT) # add time dimension back in, as this is removed by WL and is required for xclim functionality
 
 # precip
@@ -219,57 +223,53 @@ wl.wl_params.timescale = "daily"
 wl.wl_params.downscaling_method = "Dynamical"
 wl.wl_params.resolution = res
 wl.wl_params.variable = 'Precipitation (total)'
-wl.wl_params.area_subset = "states" 
-wl.wl_params.cached_area = ["CA"]
+wl.wl_params.area_subset = area_subset 
+wl.wl_params.cached_area = cached_area
 wl.wl_params.warming_levels = ["2.0"]
 wl.wl_params.anom = "No"
 wl.calculate()
 ds_precip = wl.sliced_data["2.0"]
-#ds_precip = ds_precip.sel(all_sims = list(sim_name_dict.keys()))
+ds_precip = ds_precip.sel(all_sims = list(sim_name_dict.keys()))
 ds_precip = add_dummy_time_to_wl(ds_precip)
-ds_precip = ds_precip.clip(min=0.)
-#ds_precip = xr.where(cond=ds_precip['Precipitation (total)'] < 1., x=0., y=ds_precip['Precipitation (total)'])
-
+ds_precip = ds_precip.clip(min=0.1)
 
 ## Retrieve historical baseline data (1981-2010)
-selections = ck.Select()
+selections = DataParameters()
 selections.timescale = 'daily'
 selections.variable = 'Maximum air temperature at 2m'
-selections.area_subset = "states" 
-selections.cached_area = ["CA"]
+selections.area_subset = area_subset 
+selections.cached_area = cached_area
 selections.scenario_historical=['Historical Climate']
 selections.area_average = 'No'
 selections.time_slice = (1981,2010) 
 selections.resolution = res
 max_t_hist = selections.retrieve()
-#max_t_hist = max_t_hist.sel(simulation=sims_hist)
+max_t_hist = max_t_hist.sel(simulation=sims_hist)
 
 # now min temperature
 selections.timescale = 'daily'
 selections.variable = 'Minimum air temperature at 2m'
-selections.area_subset = "states" 
-selections.cached_area = ["CA"]
+selections.area_subset = area_subset 
+selections.cached_area = cached_area
 selections.scenario_historical=['Historical Climate']
 selections.area_average = 'No'
 selections.time_slice = (1981,2010) 
 selections.resolution = res
 min_t_hist = selections.retrieve()
-#min_t_hist = min_t_hist.sel(simulation=sims_hist)
+min_t_hist = min_t_hist.sel(simulation=sims_hist)
 
 # also need precip
 selections.timescale = 'daily'
 selections.variable = 'Precipitation (total)'
-selections.area_subset = "states" 
-selections.cached_area = ["CA"]
+selections.area_subset = area_subset 
+selections.cached_area = cached_area
 selections.scenario_historical=['Historical Climate']
 selections.area_average = 'No'
 selections.time_slice = (1981,2010) 
 selections.resolution = res
 precip_hist = selections.retrieve()
-precip_hist = precip_hist.clip(min=0.)
-#precip_hist = precip_hist.sel(simulation=sims_hist)
-#precip_hist = xr.where(cond=precip_hist['Precipitation (total)'] < 1., x=0., y=precip_hist['Precipitation (total)'])
-#precip_hist = precip_hist.sel(simulation=sims_hist)
+precip_hist = precip_hist.clip(min=0.1)
+precip_hist = precip_hist.sel(simulation=sims_hist)
 
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 2: Calculate metric
@@ -279,59 +279,39 @@ def calculate_wb(tasmin, tasmax, precip):
     pet = potential_evapotranspiration(tasmin=tasmin, tasmax=tasmax, method='HG85')
     pet = pet * (60*60*24) # convert from per second to per day
     pet.attrs['units'] = 'mm'
-    
     # calculate water budget
     wb = precip - pet
     wb.attrs['units'] = 'mm/day'
-    
-    # handing for simulation/all_sims dimension between historical and wl data
-    da_list = []
-    
-    # need positive values for water balance only
-    # since the gamma distribution used for SPEI cannot accept negative ones. 
-    # This is addressed in two parts:
-    # 1. First we add the absolute value of the minimum water budget value
-    # to the entire array of each simulation's data. But we have to remove a small
-    # amount from this minimum since the xclim SPEI requires an offset value.
-    # 2. Then we add an additional offset of 1.000 mm/day when calling the SPEI function.
-    if 'simulation' in wb.dims:
-        for sim in wb.simulation.values:
-            da = wb.sel(simulation=sim)
-            wb_min = (da.min().values) 
-            print(wb_min)
-            da = da+abs(wb_min)
-            da_list.append(da)
-    
-    elif 'all_sims' in wb.dims:
-        for sim in wb.all_sims.values:
-            da = wb.sel(all_sims=sim)
-            wb_min = (da.min().values)
-            print(wb_min)
-            da = da+abs(wb_min)
-            da_list.append(da)
-            
-    wb = xr.concat(da_list, dim='simulation')
     wb = wb.chunk(dict(time=-1)).compute()
-    
     return wb
 
-def calculate_spei(wb, wb_cal):
-    # calculate 3 month SPEI
-    spei = standardized_precipitation_evapotranspiration_index(
-        wb=wb, 
-        wb_cal=wb_cal,
-        freq='MS',
-        window=3,
-        dist='gamma',
-        method='APP',
-        offset='0.000 mm/day'
-    )
+def calculate_spei(wb):
     
+    hist0 = '1981-01-01'
+    hist1 = '2010-12-31'   
+    da_list = []
+    for sim in wb.simulation.values:
+        da = wb.sel(simulation=sim)
+        wb_min = da.min().values
+        offset = str(abs(wb_min))+" mm/day"
+        # finally calculate 3 month SPEI
+        spei = standardized_precipitation_evapotranspiration_index(
+            wb=da, 
+            wb_cal=da.sel(time=slice(hist0, hist1)),
+            offset=offset,
+            freq='MS',
+            window=3,
+            dist='fisk',
+            method='ML',
+        )
+        spei.name = "spei"
+        # return spei
+        da_list.append(spei) 
+    spei_ds = xr.concat(da_list,dim="simulation")
     # assign water year coordinate
-    water_year = (spei.time.dt.month >= 10) + spei.time.dt.year
-    spei.coords['water_year'] = water_year
-    
-    return spei
+    water_year = (spei_ds.time.dt.month >= 10) + spei_ds.time.dt.year
+    spei_ds.coords['water_year'] = water_year    
+    return spei_ds
 
 # now calculate number of drought years from SPEI
 def drought_yrs(spei):   
@@ -340,45 +320,36 @@ def drought_yrs(spei):
     num_dry_months = (spei <= mod_dry_thresh).groupby('water_year').sum('time')
     num_dry_years = (num_dry_months >= drought_duration_thresh).sum('water_year')
     # take model average
-    num_dry_years_avg = num_dry_years.mean(dim=['simulation']).squeeze() 
-    
+    num_dry_years_avg = num_dry_years.mean(dim=['simulation']).squeeze()   
     # make a nan mask
     nan_mask = spei.isel(simulation=0, time=-1).squeeze()
     # nan out grid points outside of the domain
-    num_dry_years_avg = xr.where(np.isnan(nan_mask), x=np.nan, y=num_dry_years_avg)
-    
+    num_dry_years_avg = xr.where(np.isnan(nan_mask), x=np.nan, y=num_dry_years_avg)    
     return num_dry_years_avg
 
-# Calculate water budget for historical data.
-# This will also serve as our calibration water budget for the warming levels data.
-wb_hist = calculate_wb(
-    tasmin = min_t_hist,
-    tasmax = max_t_hist,
-    precip = precip_hist
-)
+## Calculate water budget
+wb_hist = calculate_wb(min_t_hist, max_t_hist, precip_hist)
+wb_wl = calculate_wb(ds_minT, ds_maxT, ds_precip)
+# Concatenate the historical and warming levels data
+# apply new dummy time vector which follows the historical period
+new_dummy_time = pd.date_range("2011-01-01", freq="1D", periods=10950)
+wb_wl = wb_wl.assign_coords({'time': new_dummy_time})
+# change simulation names so we can line them up
+wb_wl = wb_wl.rename({"all_sims" : "simulation"})
+wb_wl = wb_wl.assign_coords({'simulation': list(sim_name_dict.values())})
+# And now concatenate the historical and warming levels datasets
+wb_ds = xr.concat([wb_hist, wb_wl], dim="time")
+print("water budget done", flush=True)
+wb_ds.to_zarr('water_budget.zarr')
+# Calculate the SPEI
+spei_ds = calculate_spei(wb_ds)
+print('spei done', flush=True)
 
-# Calculate water budget for warming levels data.
-wb_wl = calculate_wb(
-    tasmin = ds_minT,
-    tasmax = ds_maxT,
-    precip = ds_precip
-)
-print("water budgets done")
-
-# Calculate historical SPEI using itself as the calibration water budget
-spei_hist = calculate_spei(
-    wb = wb_hist,
-    wb_cal = wb_hist
-)
-print("historical spei done")
-# Calculate warming levels SPEI using the historical water budget for the calibration water budget
-spei_wl = calculate_spei(
-    wb = wb_wl,
-    wb_cal = wb_hist
-)
-print("spei done")
-drought_yrs_wl = drought_yrs(spei_wl)
+# Count the number of drought years for historical and warming level periods
+spei_hist = spei_ds.sel(time=slice('1981-01-01','2010-12-31'))
 drought_yrs_hist = drought_yrs(spei_hist)
+spei_wl = spei_ds.sel(time=slice('2011-01-01','2040-12-31'))
+drought_yrs_wl = drought_yrs(spei_wl)
 
 # ----------------------------------------------------------------------------------------------------------------------
 ## Step 3: Calculate delta signal
