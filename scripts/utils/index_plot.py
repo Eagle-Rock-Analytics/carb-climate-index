@@ -3,6 +3,7 @@ import geopandas as gpd
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
+from shapely.geometry import box
 
 census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/"
 ca_boundaries = gpd.read_file(census_shp_dir)
@@ -169,10 +170,10 @@ def plot_domain(gdf, domain, savefig=False):
             fig.savefig(f'{figname}.png', format='png', dpi=300, bbox_inches='tight')
             print('Figure exported!')
 
-def plot_region_domain(gdf, counties_to_plot, savefig=False):
+def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, savefig=False, font_color='black', domain_name='Society and Economy Domain'):
     """
-    Plots a domain score vulnerability for selected counties.
-
+    Plots a domain score vulnerability for selected counties or regions, with the option to exclude features within a bounding box.
+    
     Parameters:
     -----------
     gdf : GeoDataFrame
@@ -182,29 +183,34 @@ def plot_region_domain(gdf, counties_to_plot, savefig=False):
         A list of county FIPS codes (as strings) to plot. If None, no counties will be plotted.
         Example: ['037', '071', '065', '029', '111'].
     
+    region : str, optional
+        A predefined region to plot. Options: 'bay_area', 'central_region', 'inland_deserts', 'north_central', 'northern', or 'south_coast'.
+        If specified, this will override `counties_to_plot`.
+    
+    plot_all : bool, optional
+        If True, plots all counties in California. Overrides `counties_to_plot` and `region`.
+    
     savefig : bool, optional
         If True, the plot will be saved as a PNG file. Default is False.
+
+    font_color : str, optional
+        Color of the font for county labels. Default is 'black'.
+
+    domain_name : str, optional
+        Name of the domain to include in the plot title. Default is 'Society and Economy Domain'.
 
     Returns:
     --------
     None
         Displays the plot. Optionally saves the plot as a PNG file.
-    
-    Notes:
-    ------
-    - The function assumes the column 'summed_indicators_society_economy_domain_min_max_standardized'
-      exists in the provided `gdf` and is the column to be visualized on the map.
-    - The census tract data for California is loaded from an external source ('s3://ca-climate-index/0_map_data/...').
-    - Invalid geometries (if any) will be reported, but they do not prevent the plot from being displayed.
     """
-    
     
     # Dictionary of county labels
     county_labels = {
         '001': 'Alameda', '003': 'Alpine', '005': 'Amador', '007': 'Butte', '009': 'Calaveras',
         '011': 'Colusa', '013': 'Contra Costa', '015': 'Del Norte', '017': 'El Dorado', '019': 'Fresno',
         '021': 'Glenn', '023': 'Humboldt', '025': 'Imperial', '027': 'Inyo', '029': 'Kern',
-        '031': 'Kings', '033': 'Lake', '035': 'Lassen', '037': 'Los \n Angeles', '039': 'Madera',
+        '031': 'Kings', '033': 'Lake', '035': 'Lassen', '037': 'Los Angeles', '039': 'Madera',
         '041': 'Marin', '043': 'Mariposa', '045': 'Mendocino', '047': 'Merced', '049': 'Modoc',
         '051': 'Mono', '053': 'Monterey', '055': 'Napa', '057': 'Nevada', '059': 'Orange',
         '061': 'Placer', '063': 'Plumas', '065': 'Riverside', '067': 'Sacramento', '069': 'San Benito',
@@ -215,10 +221,32 @@ def plot_region_domain(gdf, counties_to_plot, savefig=False):
         '107': 'Tulare', '109': 'Tuolumne', '111': 'Ventura', '113': 'Yolo', '115': 'Yuba'
     }
 
-    # Example of counties you want to plot (you'll pass this in as the `counties_to_plot` parameter)
-    # counties_to_plot = ['037', '071', '065', '029', '111']
+    # Define the new regional groups of counties
+    regions = {
+        'bay_area': ['001', '013', '041', '055', '081', '085', '087', '075', '095', '097'],
+        'central_region': ['019', '029', '031', '039', '043', '047', '053', '069', '079', '099', '107', '109'],
+        'inland_deserts': ['025', '027', '051', '065', '071'],
+        'north_central': ['067', '077', '017', '033', '057', '061', '091', '101', '063', '113', '115'],
+        'northern': ['015', '023', '035', '045', '049', '093', '089', '103', '105'],
+        'south_coast': ['037', '059', '073', '083', '111']
+    }
 
-    # Call in the census tract data
+    # Set counties_to_plot based on the specified region or plot_all flag
+    if plot_all:
+        counties_to_plot = list(county_labels.keys())
+        title = f'Vulnerability Index of All Counties in California - {domain_name}'
+    elif region:
+        counties_to_plot = regions.get(region, [])
+        region_name = region.replace('_', ' ').title()  # Capitalize the region name for display
+        title = f'Vulnerability Index of California\'s {region_name} - {domain_name}'
+    else:
+        title = f'Vulnerability Index of Selected Counties \n {domain_name}'
+    
+    if not counties_to_plot:
+        print('No counties specified for plotting.')
+        return
+
+    # Load the census tract data
     census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/"
     ca_boundaries = gpd.read_file(census_shp_dir)
     ca_boundaries['GEOID'] = ca_boundaries['GEOID'].astype(str)
@@ -232,6 +260,12 @@ def plot_region_domain(gdf, counties_to_plot, savefig=False):
     # Convert to GeoDataFrame with the correct CRS if necessary
     df2_filtered = gpd.GeoDataFrame(df2_filtered, geometry='geometry', crs=4269)
 
+    # Define the bounding box to exclude (xmin, ymin, xmax, ymax)
+    exclusion_box = box(-122.8, 37.6, -123.2, 37.85) 
+    
+    # Exclude features within the bounding box
+    df2_filtered = df2_filtered[~df2_filtered.intersects(exclusion_box)]
+
     # Check for invalid geometries
     invalid_geometries = df2_filtered[~df2_filtered['geometry'].is_valid]
     print("Number of invalid geometries:", len(invalid_geometries))
@@ -244,8 +278,24 @@ def plot_region_domain(gdf, counties_to_plot, savefig=False):
         print('No valid geometries. Cannot plot.')
         return
 
-    # Set up the figure
-    fig, ax = plt.subplots(1, 1, figsize=(6, 16), layout='compressed')
+    # Adjust figure size and padding based on the type and number of counties/regions
+    if plot_all:
+        fig_size = (8, 18)
+        base_font_size = 5
+    elif region:
+        fig_size = (8, 14)
+        base_font_size = 8
+    else:
+        # Specific counties
+        num_counties = len(counties_to_plot)
+        if num_counties == 1:
+            fig_size = (6, 6)
+            base_font_size = 12
+        else:
+            fig_size = (6 + (num_counties - 1) // 2, 10 + ((num_counties - 1) // 2) * 2)
+            base_font_size = min(10, 6 + (num_counties / 10))
+
+    fig, ax = plt.subplots(1, 1, figsize=fig_size, layout='compressed')
 
     # Plot county boundaries
     county_boundaries.boundary.plot(ax=ax, linewidth=0.55, edgecolor='black')
@@ -256,8 +306,7 @@ def plot_region_domain(gdf, counties_to_plot, savefig=False):
                       vmin=0, vmax=1, 
                       legend=True, 
                       cmap='RdYlBu_r', 
-                      legend_kwds={'label': 'Vulnerability (larger values are more vulnerable)', 'orientation': 'horizontal', 'shrink': 0.9, 'pad': -0.3})
-
+                      legend_kwds={'label': 'Vulnerability (larger values are more vulnerable)', 'orientation': 'horizontal', 'shrink': 0.9})
 
     # Suppress specific UserWarning messages
     warnings.filterwarnings("ignore", message="Geometry is in a geographic CRS. Results from 'area' are likely incorrect.")
@@ -266,7 +315,7 @@ def plot_region_domain(gdf, counties_to_plot, savefig=False):
     min_area = county_boundaries.area.min()
     max_area = county_boundaries.area.max()
 
-    # Add county labels with dynamic font size based on normalized county area
+    # Adjust font size based on figure size and county area
     for county_code in counties_to_plot:
         label = county_labels.get(county_code, '')
         if label:  # Only add label if it exists in the dictionary
@@ -276,18 +325,29 @@ def plot_region_domain(gdf, counties_to_plot, savefig=False):
             # Dynamically adjust font size based on the area of the county
             county_area = county_boundaries[county_code].area
 
-            # Normalize the area to a font size between 6 and 12
+            # Normalize the area to a font size
             if max_area > min_area:
-                font_size = 6 + (12 - 6) * (county_area - min_area) / (max_area - min_area)
+                font_size = base_font_size + (10 - base_font_size) * (county_area - min_area) / (max_area - min_area)
             else:
-                font_size = 6  # In case all counties have the same area
+                font_size = base_font_size
 
-            # Add text label to the plot
-            ax.text(centroid.x, centroid.y, label, weight='roman', fontsize=font_size, ha='center', va='baseline')
+            # Add text label to the plot with specified font color
+            ax.text(centroid.x, centroid.y, label, weight='medium', fontsize=font_size, color=font_color, ha='center', va='baseline', alpha=1)
 
-        # Optionally save the figure
-        if savefig:
-            plt.savefig(f'region_plot_{counties_to_plot}.png', dpi=300)
+    # Set the plot title
+    ax.set_title(title, fontsize=13, weight='normal')
+
+    # Automatically adjust padding to be below x-axis ticks
+    x_ticks = ax.get_xticks()
+    x_tick_labels = ax.get_xticklabels()
+    max_label_height = max([tick.get_window_extent().height for tick in x_tick_labels])
+
+    # Adjust padding based on the maximum label height
+    padding = max_label_height / fig.dpi
+
+    # Optionally save the figure
+    if savefig:
+        plt.savefig(f'region_plot_{counties_to_plot}.png', dpi=300)
 
     # Display the plot
     plt.show()
