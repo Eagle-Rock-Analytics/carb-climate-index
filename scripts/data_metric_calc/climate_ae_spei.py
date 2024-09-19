@@ -184,7 +184,7 @@ def min_max_standardize(df, col):
 # * 30 year centered around 2.0C warming level (SSP3-7.0)
 # * Historical baseline 1981-2010 (Historical Climate)
 
-res = '3 km'
+res = '9 km'
 area_subset = "states"
 cached_area = ["CA"]
 ## Step 1a) Chronic data (2.0°C WL)
@@ -200,6 +200,7 @@ wl.wl_params.warming_levels = ["2.0"]
 wl.wl_params.anom = "No"
 wl.calculate()
 ds_maxT = wl.sliced_data["2.0"] # grab 2.0 degC data
+print(ds_maxT.all_sims.values)
 ds_maxT = ds_maxT.sel(all_sims = list(sim_name_dict.keys()))
 ds_maxT = add_dummy_time_to_wl(ds_maxT) # add time dimension back in, as this is removed by WL and is required for xclim functionality
 
@@ -338,9 +339,11 @@ wb_wl = wb_wl.rename({"all_sims" : "simulation"})
 wb_wl = wb_wl.assign_coords({'simulation': list(sim_name_dict.values())})
 # And now concatenate the historical and warming levels datasets
 wb_ds = xr.concat([wb_hist, wb_wl], dim="time")
-
+print("water budget done", flush=True)
+wb_ds.to_zarr('water_budget.zarr')
 # Calculate the SPEI
 spei_ds = calculate_spei(wb_ds)
+print('spei done', flush=True)
 
 # Count the number of drought years for historical and warming level periods
 spei_hist = spei_ds.sel(time=slice('1981-01-01','2010-12-31'))
