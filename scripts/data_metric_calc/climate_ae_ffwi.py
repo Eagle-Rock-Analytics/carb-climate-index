@@ -164,15 +164,14 @@ res = "9 km"
 wl = warming_levels()
 
 ## FFWI options
+wl.wl_params.downscaling_method = "Dynamical"
+wl.wl_params.timescale = "hourly"
 wl.wl_params.variable_type = 'Derived Index'
 wl.wl_params.variable = 'Fosberg fire weather index'
-wl.wl_params.timescale = "hourly"
-wl.wl_params.downscaling_method = "Dynamical"
 wl.wl_params.resolution = res # must test in 45 km on Hub
 wl.wl_params.area_subset = area_subset
 wl.wl_params.cached_area = [cached_area]
 wl.wl_params.warming_levels = ["2.0"]
-wl.wl_params.units = "degF"
 wl.wl_params.anom = "No"
 wl.calculate()
 ds_f = wl.sliced_data["2.0"] # grab 2.0 degC data
@@ -230,7 +229,6 @@ selections.cached_area = cached_area
 selections.scenario_historical = ['Historical Climate']
 selections.time_slice = (1981, 2010)
 selections.resolution = res ## 45km for testing on AE hub
-selections.units = 'degF'
 hist_ds = selections.retrieve()
 hist_ds = hist_ds.sel(simulation = sims_hist)
 
