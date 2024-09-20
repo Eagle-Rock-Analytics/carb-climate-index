@@ -43,7 +43,31 @@ def indicator_dicts(domain):
 
                 'economic_health' : ['gini',
                                     'median_income',
-                                    'hachman'] 
+                                    'hachman']}
+    metric_to_indicator_built_dict = {
+        'communication' :           ['low_internet',
+                                    'cellular_towers',
+                                    'microwave_towers',
+                                    'mobile_towers',
+                                    'paging_towers',
+                                    'radio_towers',
+                                    'tv_contour'],
+
+        'housing_vacancy_quality' : ['housing_before_1980',
+                                    'mobile_homes',
+                                    'kitchen_facilities',
+                                    'vacant_housing'],
+
+        'transportation' :          ['airports',
+                                    'bottlenecks',
+                                    'bridges',
+                                    'highway',
+                                    'railway'],
+
+        'utilities' :               ['power_plant',
+                                    'psps_event',
+                                    'underground_transmission',
+                                    'wastewater_facilities']
     }
 
     if domain == 'society_economy':
