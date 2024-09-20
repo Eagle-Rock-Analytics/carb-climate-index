@@ -229,7 +229,7 @@ def process_domain_csv_files(prefix, input_folder, output_folder, meta_csv, merg
         df = pd.read_csv(file)
         
         # Rename 'GEO_ID', 'tract', 'TRACT', 'Census_Tract', 'GEOID', 'USCB_GEOID' to 'GEOID' if they exist
-        rename_cols = ['GEO_ID', 'tract', 'TRACT', 'Census_Tract', 'census_tract', 'USCB_GEOID']
+        rename_cols = ['GEO_ID', 'tract', 'TRACT', 'Census_Tract', 'census_tract', 'USCB_GEOID', 'Unnamed: 0']
         for col in rename_cols:
             if col in df.columns:
                 df.rename(columns={col: 'GEOID'}, inplace=True)
