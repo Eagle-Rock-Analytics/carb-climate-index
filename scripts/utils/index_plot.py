@@ -155,7 +155,11 @@ def plot_domain(gdf, domain, savefig=False):
                 legend_kwds={'label': 'Vulnerability (larger values are more vulnerable)', 'orientation': 'horizontal', 'shrink': 1.0, 'pad': 0.03})
         
         # Set title
-        ax.set_title(f'Cal-CRAI: {domain} domain', fontsize = 16.5)
+        # Adjust the domain string to replace underscores with spaces and capitalize each word
+        formatted_domain = domain.replace('_', ' ').title()
+
+        # Set the plot title using the formatted domain string
+        ax.set_title(f'Cal-CRAI: {formatted_domain} Domain', fontsize=16.5)
 
         # Display the plot
         plt.show()
