@@ -46,7 +46,7 @@ def indicator_dicts(domain):
                                     'hachman'] 
     }
 
-    if domain == 'society':
+    if domain == 'society_economy':
         return metric_to_indicator_society_dict
     elif domain == 'natural':
         return metric_to_indicator_natural_dict
@@ -440,7 +440,7 @@ def compute_averaged_indicators(df, metric_to_indicator_dict):
    
     return avg_indicator_metrics
 
-def compute_summed_indicators(df, columns_to_sum):
+def compute_summed_indicators(df, columns_to_sum, domain_prefix):
     '''
     Computes the sum of the specified columns in the input DataFrame and stores the result in a new DataFrame.
 
@@ -467,19 +467,21 @@ def compute_summed_indicators(df, columns_to_sum):
     # Calculate the sum of the specified columns
     summed_values = df[columns_to_sum].sum(axis=1)
 
+    summed_indicator_name = f'summed_indicators_{domain_prefix}domain'
+
     # Store the summed values in the result DataFrame with the specified column name
-    summed_indicators_df['summed_indicators_society_economy_domain'] = summed_values
+    summed_indicators_df[summed_indicator_name] = summed_values
 
     # Include the 'GEOID' column from the original DataFrame
     summed_indicators_df['GEOID'] = df['GEOID']
 
     # Reorder the columns to have 'GEOID' as the first column
-    summed_indicators_df = summed_indicators_df[['GEOID', 'summed_indicators_society_economy_domain']]
+    summed_indicators_df = summed_indicators_df[['GEOID', summed_indicator_name]]
 
     # Print the resulting DataFrame (optional)
     # print(summed_indicators_df)
-    print('Indicator sum min value:', summed_indicators_df['summed_indicators_society_economy_domain'].min())
-    print('Indicator sum max value:', summed_indicators_df['summed_indicators_society_economy_domain'].max())
+    print('Indicator sum min value:', summed_indicators_df[summed_indicator_name].min())
+    print('Indicator sum max value:', summed_indicators_df[summed_indicator_name].max())
 
     return summed_indicators_df
 
@@ -501,12 +503,7 @@ def add_census_tracts(df):
     return gdf
 
 
-def domain_summary_stats(gdf, domain):
-    # locate the min-max standardized column
-    if domain == 'society_':
-        domain = 'society_economy'
-    col = f'summed_indicators_{domain}_domain_min_max_standardized'
-
+def domain_summary_stats(gdf, column):
     # summary stats
-    print(f'Median {domain} domain value: {gdf[col].median()}')
-    print(f'Mean {domain} domain value: {gdf[col].mean()}')
+    print(f'Median {column} domain value: {gdf[column].median()}')
+    print(f'Mean {column} domain value: {gdf[column].mean()}')

@@ -139,19 +139,15 @@ def _domain_plot_weighting(df, society, built, natural):
     return df
 
 def plot_domain(gdf, domain, savefig=False):
-    if domain == "society_":
-        domain = "society_economy"
-
     # check for invalid geometries
     if len(gdf) == 0:
         print('No valid geometries. Cannot plot.')
-
     else:
         # Set up the figure
         fig, ax = plt.subplots(1, 1, figsize=(5, 8), layout='compressed')
 
         # Plot the data
-        plot = gdf.plot(column=f'summed_indicators_{domain}_domain_min_max_standardized', 
+        plot = gdf.plot(column=f'summed_indicators_{domain}domain_min_max_standardized', 
                 ax=ax, 
                 vmin=0, vmax=1, 
                 legend=True, 
@@ -170,7 +166,7 @@ def plot_domain(gdf, domain, savefig=False):
             fig.savefig(f'{figname}.png', format='png', dpi=300, bbox_inches='tight')
             print('Figure exported!')
 
-def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, savefig=False, font_color='black', domain_name='Society and Economy Domain'):
+def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, savefig=False, font_color='black', domain='society_economy_', domain_label_map=None):
     """
     Plots a domain score vulnerability for selected counties or regions, with the option to exclude features within a bounding box.
     
@@ -196,15 +192,24 @@ def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, 
     font_color : str, optional
         Color of the font for county labels. Default is 'black'.
 
-    domain_name : str, optional
-        Name of the domain to include in the plot title. Default is 'Society and Economy Domain'.
+    domain : str, optional
+        The domain name used for labeling and column names. Default is 'society_economy_'.
 
+    domain_label_map : dict, optional
+        A dictionary to map the domain variable to a more readable label. Example: {'society_economy_': 'Society and Economy Domain'}
+    
     Returns:
     --------
     None
         Displays the plot. Optionally saves the plot as a PNG file.
     """
     
+    # If a domain label map is provided, use it to get a readable title. Otherwise, create it from the domain string.
+    if domain_label_map:
+        domain_name = domain_label_map.get(domain, domain.replace('_', ' ').title())
+    else:
+        domain_name = domain.replace('_', ' ').title()
+
     # Dictionary of county labels
     county_labels = {
         '001': 'Alameda', '003': 'Alpine', '005': 'Amador', '007': 'Butte', '009': 'Calaveras',
@@ -241,10 +246,6 @@ def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, 
         title = f'Vulnerability Index of California\'s {region_name} - {domain_name}'
     else:
         title = f'Vulnerability Index of Selected Counties \n {domain_name}'
-    
-    if not counties_to_plot:
-        print('No counties specified for plotting.')
-        return
 
     # Load the census tract data
     census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/"
@@ -301,7 +302,7 @@ def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, 
     county_boundaries.boundary.plot(ax=ax, linewidth=0.55, edgecolor='black')
 
     # Plot the data
-    df2_filtered.plot(column='summed_indicators_society_economy_domain_min_max_standardized', 
+    df2_filtered.plot(column=f'summed_indicators_{domain}domain_min_max_standardized', 
                       ax=ax, 
                       vmin=0, vmax=1, 
                       legend=True, 
