@@ -211,7 +211,7 @@ def process_domain_csv_files(prefix, input_folder, output_folder, meta_csv, merg
         # Remove the original file
         os.remove(file)
 
-    print(f"Processed and saved {len(source_files)} CSV files within {prefix} domain.")
+    print(f"Processed and saved {len(source_files)} CSV files within {prefix}domain.")
 
     print('\nMetric resilience/vulnerable dictionary created and called: metric_vulnerable_resilient_dict')
 
