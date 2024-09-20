@@ -44,6 +44,7 @@ def indicator_dicts(domain):
                 'economic_health' : ['gini',
                                     'median_income',
                                     'hachman']}
+    
     metric_to_indicator_built_dict = {
         'communication' :           ['low_internet',
                                     'cellular_towers',
@@ -67,9 +68,72 @@ def indicator_dicts(domain):
         'utilities' :               ['power_plant',
                                     'psps_event',
                                     'underground_transmission',
-                                    'wastewater_facilities']
-    }
+                                    'wastewater_facilities']}
+    
+    metric_to_indicator_natural_dict = {
+            'natural_resource_conservation' : ['protected_areas'],
 
+            'agricultural_productivity_conservation' : ['ssma',
+                                                        'esi_mean'],
+                                                        
+            'ecosystem_condition' :               ['air_quality',
+                                                'SpBioWtEco',
+                                                'impervious',
+                                                'vulnerable_soils',
+                                                'vulnerable_drought',
+                                                'vulnerable_fire']}
+    metric_to_indicator_governance_dict = {
+            'emergency_response' :  ['fire_stations',
+                                    'medical_technicians',
+                                    'firefighting',
+                                    'police_officers',
+                                    'registered_nurses'
+                                    ],
+
+            'personal_preparedness' : ['flood_policies',
+                                        'mortgage',
+                                        'prepared_for_general_disaster',
+                                        'prepared_without_power',
+                                        'prepared_without_water'
+                                    ],
+
+        'community_preparedness' :  ['fuel_reduction',
+                                    'nfip_participation',
+                                    'hazard_mitigation',
+                                    'fuel_reduction'
+                                    ],
+
+            'natural_resource_conservation' :  ['timber_management'
+                                                'sampled_wells'
+                                            ]}
+    metric_to_indicator_climate_dict = {
+                            'exposure': ['sum_d1_d4',
+                                'percent_weeks_drought',
+                                'protected_areas_percentage',
+                                'median_warning_days',
+                                'building_content_cost',
+                                'fire_stations_count_diff',
+                                'hospitals_count_diff',
+                                'police_stations_count_diff',
+                                'schools_count_diff',
+                                'building_count',
+                                'delta_percentage_change',
+                                'wastewater_count'
+                            ],
+                            'loss': ['determined_acres_x',
+                                'indemnity_amount_x',
+                                'avg_insurance_payout_per_claim',
+                                'estimated_crop_loss_cost',
+                                'total_fatalities',
+                                'change_chill_hours_min_max_standardized',
+                                'determined_acres_y',
+                                'indemnity_amount_y',
+                                'avg_age_adjust_heat_hospitalizations_per_10000',
+                                'rcp_4.5__50th_percent_change',
+                                'average_damaged_destroyed_structures',
+                                'average_fatalities'
+                            ]}
+    
     if domain == 'society_economy':
         return metric_to_indicator_society_dict
     elif domain == 'natural':
