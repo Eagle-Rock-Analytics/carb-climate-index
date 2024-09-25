@@ -457,6 +457,7 @@ def min_max_standardize(df, cols_to_run_on, tolerance=1e-9):
     all_good = True  # Flag to track if all columns are within range
 
     for col in cols_to_run_on:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
         max_value = df[col].max()
         min_value = df[col].min()
         
