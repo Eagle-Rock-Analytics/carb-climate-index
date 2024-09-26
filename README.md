@@ -1,6 +1,6 @@
 # California Climate Risk and Adaptation Index
 
-DOI: !DOI:<10.5281/zenodo.13840187>(:https://doi.org/10.5281/zenodo.13840187) <br>
+DOI: *forthcoming* <br>
 Victoria Ford, Jesse Espinoza, Beth McClenny, Grace DiCecco, Owen Doherty
 
 This repository contains the code (via Jupyter Notebooks and scripts) associated with the data processing in calculating input metrics for the California Climate Risk and Adaptation Index (Cal-CRAI). 
