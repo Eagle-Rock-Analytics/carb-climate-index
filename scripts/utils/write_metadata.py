@@ -47,10 +47,13 @@ def make_metadata_files(df):
             f.write(f"{key}: {val[var]}")
             f.write("\n")        
         f.write(
-            "*** As of the making of this document ("+ datestr+"), "
-            +"this work is still in development and "
-            +"may not represent the final data product for ingestion "
+            "*** This document was generated on ("+ datestr+"), "
+            +"to describe the steps used to incorporate this metric "
             +"into the California Climate Risk and Adaptation Index. ***")
+        f.write("\n")
+        f.write("*** All metrics used to calculate the California Climate Risk "
+                +"and Adaptation Index are archived at "
+                +"https://doi.org/10.5281/zenodo.13840187 ***")
         f.close()
         s3_client.upload_file(
             file_name, 'ca-climate-index', obj_name)
@@ -89,7 +92,7 @@ def append_metadata(func):
             f.write("\n")
             f.write(f"Function name: {func.__name__}")
             f.write("\n")
-            f.write(f"Date function applied and/or metadata document generated: {datestr}")
+            f.write(f"Date function applied: {datestr}")
             f.write("\n")
             f.write(f"Function description: {func.__doc__}")
             f.write("\n")

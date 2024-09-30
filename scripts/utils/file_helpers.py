@@ -131,6 +131,13 @@ def pull_gpkg_from_directory(bucket_name, directory):
     else:
         print("No objects found in the specified directory.")
 
+def pull_nc_from_directory(file_to_grab, filename):
+    """Downloads a nc file from specified directory in s3 bucket"""
+
+    s3 = boto3.client('s3')
+    s3.download_file("ca-climate-index", file_to_grab, filename)
+    print(f'{file_to_grab} downloaded!')
+
 
 def upload_csv_aws(file_names, bucket_name, directory):
     """

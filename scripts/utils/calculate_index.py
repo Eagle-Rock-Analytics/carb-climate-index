@@ -44,7 +44,7 @@ def indicator_dicts(domain):
                 'economic_health' : ['gini',
                                     'median_income',
                                     'hachman']}
-    
+
     metric_to_indicator_built_dict = {
         'communication' :           ['low_internet',
                                     'cellular_towers',
@@ -97,7 +97,7 @@ def indicator_dicts(domain):
                                         'prepared_without_water'
                                     ],
 
-        'community_preparedness' :  ['fuel_reduction',
+            'community_preparedness' :  ['fuel_reduction',
                                     'nfip_participation',
                                     'hazard_mitigation',
                                     'fuel_reduction'
@@ -133,7 +133,7 @@ def indicator_dicts(domain):
                                 'average_damaged_destroyed_structures',
                                 'average_fatalities'
                             ]}
-    
+   
     if domain == 'society_economy':
         return metric_to_indicator_society_dict
     elif domain == 'natural':
