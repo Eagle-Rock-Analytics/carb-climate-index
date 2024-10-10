@@ -211,7 +211,7 @@ def process_domain_csv_files(prefix, input_folder, output_folder, meta_csv, merg
         # Remove the original file
         os.remove(file)
 
-    print(f"Processed and saved {len(source_files)} CSV files within {prefix}domain.")
+    print(f"Processed and saved {len(source_files)} CSV files within {prefix} domain.")
 
     print('\nMetric resilience/vulnerable dictionary created and called: metric_vulnerable_resilient_dict')
 
@@ -229,12 +229,12 @@ def process_domain_csv_files(prefix, input_folder, output_folder, meta_csv, merg
         df = pd.read_csv(file)
         
         # Rename 'GEO_ID', 'tract', 'TRACT', 'Census_Tract', 'GEOID', 'USCB_GEOID' to 'GEOID' if they exist
-        rename_cols = ['GEO_ID', 'tract', 'TRACT', 'Census_Tract', 'census_tract', 'USCB_GEOID', 'Unnamed: 0']
+        rename_cols = ['GEO_ID', 'GEOID', 'tract', 'TRACT', 'Census_Tract', 'census_tract', 'USCB_GEOID', 'Unnamed: 0']
         for col in rename_cols:
             if col in df.columns:
                 df.rename(columns={col: 'GEOID'}, inplace=True)
                 break
-        
+         
         # Keep only the 'GEOID' and the last column from each file
         last_column = df.columns[-1]
         df = df[['GEOID', last_column]]
@@ -457,7 +457,9 @@ def min_max_standardize(df, cols_to_run_on, tolerance=1e-9):
     all_good = True  # Flag to track if all columns are within range
 
     for col in cols_to_run_on:
+        # Convert the column to numeric, forcing any errors to NaN
         df[col] = pd.to_numeric(df[col], errors='coerce')
+
         max_value = df[col].max()
         min_value = df[col].min()
         
