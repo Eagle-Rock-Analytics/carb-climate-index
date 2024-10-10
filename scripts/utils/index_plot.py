@@ -155,7 +155,11 @@ def plot_domain(gdf, domain, savefig=False):
                 legend_kwds={'label': 'Vulnerability (larger values are more vulnerable)', 'orientation': 'horizontal', 'shrink': 1.0, 'pad': 0.03})
         
         # Set title
-        ax.set_title(f'Cal-CRAI: {domain} domain', fontsize = 16.5)
+        # Adjust the domain string to replace underscores with spaces and capitalize each word
+        formatted_domain = domain.replace('_', ' ').title()
+
+        # Set the plot title using the formatted domain string
+        ax.set_title(f'Cal-CRAI: {formatted_domain} Domain', fontsize=16.5)
 
         # Display the plot
         plt.show()
@@ -233,7 +237,8 @@ def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, 
         'inland_deserts': ['025', '027', '051', '065', '071'],
         'north_central': ['067', '077', '017', '033', '057', '061', '091', '101', '063', '113', '115'],
         'northern': ['015', '023', '035', '045', '049', '093', '089', '103', '105'],
-        'south_coast': ['037', '059', '073', '083', '111']
+        'south_coast': ['037', '059', '073', '083', '111'],
+        'slr_coast' : ['001', '013', '015', '023', '037', '041', '045', '053', '055', '059', '067', '073', '075', '077', '079', '081', '083', '085', '087', '095', '097', '111', '113']
     }
 
     # Set counties_to_plot based on the specified region or plot_all flag
