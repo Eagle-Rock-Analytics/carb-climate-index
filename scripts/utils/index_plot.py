@@ -98,7 +98,7 @@ def index_plot(df, scenario=None, save=False):
 def index_domain_plot(df, scenario=None, society=1, built=1, natural=1, save=False):
     '''Produces subplots of the Cal-CRAI index value and the corresponding domains'''
     # internally weight domains
-    df = _domain_plot_weighting(df, society, built, natural)
+    df = domain_plot_weighting(df, society, built, natural)
     
     # plotting help
     df2 = df.merge(ca_boundaries, on='GEOID')
@@ -131,7 +131,7 @@ def index_domain_plot(df, scenario=None, society=1, built=1, natural=1, save=Fal
     if save:
         fig.savefig('dummy_ca_domains_map.png', dpi=300, bbox_inches='tight') ## need to replace fig name once data repo completed
 
-def _domain_plot_weighting(df, society, built, natural):
+def domain_plot_weighting(df, society, built, natural):
     '''In order to visualize the importance of weighting each domain'''
     df['DUMMY_society_tract_adjusted'] = df['DUMMY_society_tract_adjusted'] * society
     df['DUMMY_built_tract_adjusted'] = df['DUMMY_built_tract_adjusted'] * built
@@ -146,8 +146,15 @@ def plot_domain(gdf, domain, savefig=False):
         # Set up the figure
         fig, ax = plt.subplots(1, 1, figsize=(5, 8), layout='compressed')
 
+        # Define the column to plot
+        column_to_plot = f'summed_indicators_{domain}domain_min_max_standardized'
+
+        # Check if the alternative column exists in the GeoDataFrame
+        if 'loss_exposure_product_min_max_standardized' in gdf.columns:
+            column_to_plot = 'loss_exposure_product_min_max_standardized'
+
         # Plot the data
-        plot = gdf.plot(column=f'summed_indicators_{domain}domain_min_max_standardized', 
+        plot = gdf.plot(column=column_to_plot, 
                 ax=ax, 
                 vmin=0, vmax=1, 
                 legend=True, 
@@ -306,8 +313,15 @@ def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, 
     # Plot county boundaries
     county_boundaries.boundary.plot(ax=ax, linewidth=0.55, edgecolor='black')
 
+    # Define the column to plot
+    column_to_plot = f'summed_indicators_{domain}domain_min_max_standardized'
+
+    # Check if the alternative column exists in the GeoDataFrame
+    if 'loss_exposure_product_min_max_standardized' in gdf.columns:
+        column_to_plot = 'loss_exposure_product_min_max_standardized'
+
     # Plot the data
-    df2_filtered.plot(column=f'summed_indicators_{domain}domain_min_max_standardized', 
+    df2_filtered.plot(column=column_to_plot, 
                       ax=ax, 
                       vmin=0, vmax=1, 
                       legend=True, 

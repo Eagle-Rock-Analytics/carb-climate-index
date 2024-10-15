@@ -531,6 +531,45 @@ def compute_averaged_indicators(df, metric_to_indicator_dict):
    
     return avg_indicator_metrics
 
+def compute_summed_climate_indicators(df, metric_to_indicator_dict):
+    '''
+
+    Parameters
+    ----------
+    df : DataFrame
+        Input DataFrame with standardized metrics.
+    metric_to_indicator_dict : dict
+        Dictionary where keys are indicator names and values are lists of keywords to match column names.
+    
+    Returns
+    -------
+    DataFrame
+        DataFrame with averaged indicators and 'GEOID' column.
+    '''
+    
+    # Create an empty DataFrame to store the results
+    summed_indicator_metrics = pd.DataFrame()
+
+    # Iterate through the items of the dictionary
+    for indicator, keywords in metric_to_indicator_dict.items():
+        # Filter columns based on the keyword values for the current indicator
+        indicator_columns = [col for col in df.columns if any(keyword in col for keyword in keywords)]
+        
+        # Compute the sum of the selected columns
+        summed_values = df[indicator_columns].sum(axis=1)
+        
+        # Store the summed values in the result DataFrame with the indicator name as the column name
+        summed_indicator_metrics[indicator] = summed_values
+
+    # Include the 'GEOID' column from the original DataFrame
+    summed_indicator_metrics['GEOID'] = df['GEOID']
+    
+    # Reorder the columns to have 'GEOID' as the first column
+    summed_indicator_metrics = summed_indicator_metrics[['GEOID'] + [col for col in summed_indicator_metrics.columns if col != 'GEOID']]
+    # print(avg_indicator_metrics)
+   
+    return summed_indicator_metrics
+
 def compute_summed_indicators(df, columns_to_sum, domain_prefix):
     '''
     Computes the sum of the specified columns in the input DataFrame and stores the result in a new DataFrame.
