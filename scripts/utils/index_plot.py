@@ -308,7 +308,7 @@ def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, 
             fig_size = (6 + (num_counties - 1) // 2, 10 + ((num_counties - 1) // 2) * 2)
             base_font_size = min(10, 6 + (num_counties / 10))
 
-    fig, ax = plt.subplots(1, 1, figsize=fig_size, layout='compressed')
+    fig, ax = plt.subplots(1, 1, figsize=fig_size, layout='constrained')
 
     # Plot county boundaries
     county_boundaries.boundary.plot(ax=ax, linewidth=0.55, edgecolor='black')
