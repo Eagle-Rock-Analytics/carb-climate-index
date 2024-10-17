@@ -107,32 +107,41 @@ def indicator_dicts(domain):
                                                 'sampled_wells'
                                             ]}
     metric_to_indicator_climate_dict = {
-                            'exposure': ['sum_d1_d4',
-                                'percent_weeks_drought',
-                                'protected_areas_percentage',
-                                'median_warning_days',
-                                'building_content_cost',
-                                'fire_stations_count_diff',
-                                'hospitals_count_diff',
-                                'police_stations_count_diff',
-                                'schools_count_diff',
-                                'building_count',
-                                'delta_percentage_change',
-                                'wastewater_count'
-                            ],
-                            'loss': ['determined_acres_x',
-                                'indemnity_amount_x',
-                                'avg_insurance_payout_per_claim',
-                                'estimated_crop_loss_cost',
-                                'total_fatalities',
-                                'change_chill_hours_min_max_standardized',
-                                'determined_acres_y',
-                                'indemnity_amount_y',
+                    "exposure" :   ['drought_coverage_percentage',
+                                    'change_in_drought_years',
+                                    'percent_weeks_drought',
+                                    'precip_99percentile',
+                                    'surface_runoff',
+                                    'floodplain_percentage',
+                                    'median_flood_warning_days',
+                                    'mean_change_annual_heat_days',
+                                    'mean_change_annual_warm_nights',
+                                    'median_heat_warning_days',
+                                    'slr_vulnerability_delta_percentage_change',
+                                    'slr_fire_stations_count_metric',
+                                    'slr_police_stations_count_metric',
+                                    'slr_schools_count_metric',
+                                    'slr_hospitals_count_metric',
+                                    'slr_vulnerable_wastewater_treatment_count',
+                                    'building_exposed_slr_count',
+                                    'slr_vulnerable_building_content_cost',
+                                    'change_ffwi_days',
+                                    'median_red_flag_warning_days'
+                    ],
+                    "loss"  :  ['drought_crop_loss_acres',
+                                'drought_crop_loss_indemnity_amount',
+                                'avg_flood_insurance_payout_per_claim',
+                                'estimated_flood_crop_loss_cost',
+                                'total_flood_fatalities',
+                                'mean_change_cold_days',
+                                'heat_crop_loss_acres',
+                                'heat_crop_loss_indemnity_amount',
                                 'avg_age_adjust_heat_hospitalizations_per_10000',
                                 'rcp_4.5__50th_percent_change',
-                                'average_damaged_destroyed_structures',
-                                'average_fatalities'
-                            ]}
+                                'burn_area_m2',
+                                'average_damaged_destroyed_structures_wildfire',
+                                'average_annual_fatalities_wildfire'
+    ]}
    
     if domain == 'society_economy':
         return metric_to_indicator_society_dict
@@ -211,7 +220,7 @@ def process_domain_csv_files(prefix, input_folder, output_folder, meta_csv, merg
         # Remove the original file
         os.remove(file)
 
-    print(f"Processed and saved {len(source_files)} CSV files within {prefix} domain.")
+    print(f"Processed and saved {len(source_files)} CSV files within {prefix}domain.")
 
     print('\nMetric resilience/vulnerable dictionary created and called: metric_vulnerable_resilient_dict')
 
