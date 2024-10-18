@@ -150,8 +150,8 @@ def plot_domain(gdf, domain, savefig=False):
         column_to_plot = f'summed_indicators_{domain}domain_min_max_standardized'
 
         # Check if the alternative column exists in the GeoDataFrame
-        if 'loss_exposure_product_min_max_standardized' in gdf.columns:
-            column_to_plot = 'loss_exposure_product_min_max_standardized'
+        if 'climate_risk_min_max_standardized' in gdf.columns:
+            column_to_plot = 'climate_risk_min_max_standardized'
 
         # Plot the data
         plot = gdf.plot(column=column_to_plot, 
@@ -317,8 +317,8 @@ def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, 
     column_to_plot = f'summed_indicators_{domain}domain_min_max_standardized'
 
     # Check if the alternative column exists in the GeoDataFrame
-    if 'loss_exposure_product_min_max_standardized' in gdf.columns:
-        column_to_plot = 'loss_exposure_product_min_max_standardized'
+    if 'climate_risk_min_max_standardized' in gdf.columns:
+        column_to_plot = 'climate_risk_min_max_standardized'
 
     # Plot the data
     df2_filtered.plot(column=column_to_plot, 
