@@ -303,16 +303,22 @@ def process_domain_csv_files(prefix, input_folder, output_folder, meta_csv, merg
     print(f"Processed CSV saved as {merged_output_file}")
     return metric_vulnerable_resilient_dict
 
+def print_index_summary(df):
+    print('Min score / less resilience: ', df['calcrai_score'].min())
+    print('Max score / more resilience: ', df['calcrai_score'].max())
+    print('Mean score / average resilience: ', df['calcrai_score'].mean())
+    print('Median score / median resilience: ', df['calcrai_score'].median())
+
 
 def weight_domains(df, society, built, natural):
     '''
     Calculates the weighting scheme, based on input parameters:
     society, built, and natural
     '''
-    governance_col = 'DUMMY_governance_summed_indicators_min_max_standardized'
-    society_adjusted_col = 'DUMMY_society_tract_adjusted'
-    built_adjusted_col = 'DUMMY_built_tract_adjusted'
-    natural_adjusted_col = 'DUMMY_natural_tract_adjusted' 
+    governance_col = 'governance_domain_index'
+    society_adjusted_col = 'society_economy_tract_adjusted'
+    built_adjusted_col = 'built_tract_adjusted'
+    natural_adjusted_col = 'natural_systems_tract_adjusted' 
 
     weighting = (
         df[governance_col] + 
@@ -327,11 +333,11 @@ def weight_domains(df, society, built, natural):
 
 def calculate_index(df):
     '''Calcutes the Cal-CRAI index'''
-    
-    df['calcrai_score'] = df['calcrai_weighted'] / df['acute_risk']
+    # divide by climate domain
+    df['calcrai_score'] = df['calcrai_weighted'] / df['climate_risk']
 
     # testing for 0 values --> divide error
-    df.loc[df['acute_risk'] == 0, 'calcrai_score'] = 0
+    df.loc[df['climate_risk'] == 0, 'calcrai_score'] = 0
     
     return df
 

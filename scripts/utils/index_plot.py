@@ -72,13 +72,12 @@ def _id_county_label(county_code, label):
         '115': 'Yuba'
     }
 
-def index_plot(df, scenario=None, save=False):
+def index_plot(df, scenario=None, save=False, save_name = False):
     '''Maps the Cal-CRAI index value for entire state'''
 
     # plotting help
     df2 = df.merge(ca_boundaries, on='GEOID')
-    df2['geometry'] = df2['geometry_y']
-    df2 = df2.drop(columns = ['geometry_x','geometry_y'])
+    df2['geometry'] = df2['geometry']
     df2 = gpd.GeoDataFrame(df2, geometry='geometry', crs=4269)
 
     # set-up figure
@@ -93,7 +92,7 @@ def index_plot(df, scenario=None, save=False):
         plt.annotate('Weighting for {}'.format(scenario), xy=(0.02, 0.02), xycoords='axes fraction')
 
     if save:
-        fig.savefig('dummy_ca_map.png', dpi=300, bbox_inches='tight') ## need to replace fig name once data repo completed
+        fig.savefig(f'{save_name}.png', dpi=300, bbox_inches='tight') ## need to replace fig name once data repo completed
 
 def index_domain_plot(df, scenario=None, society=1, built=1, natural=1, save=False):
     '''Produces subplots of the Cal-CRAI index value and the corresponding domains'''
