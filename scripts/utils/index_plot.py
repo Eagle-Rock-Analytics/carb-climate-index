@@ -72,7 +72,7 @@ def _id_county_label(county_code, label):
         '115': 'Yuba'
     }
 
-def index_plot(df, scenario=None, save=False, save_name = False):
+def index_plot(df, scenario=None, save=False, save_name = False, vmin=-3, vmax=3):
     '''Maps the Cal-CRAI index value for entire state'''
 
     # plotting help
@@ -83,7 +83,7 @@ def index_plot(df, scenario=None, save=False, save_name = False):
     # set-up figure
     fig, ax = plt.subplots(1, 1, figsize=(4.5,6), layout='compressed')
 
-    df2.plot(column='calcrai_score', ax=ax, vmin=-3, vmax=3, legend=True, cmap='RdYlBu',
+    df2.plot(column='calcrai_score', ax=ax, vmin=vmin, vmax=vmax, legend=True, cmap='RdYlBu',
                      legend_kwds={'label':'Cal-CRAI Index value', 'orientation': 'horizontal', 'shrink':0.7});
 
     if scenario == None:
@@ -149,8 +149,8 @@ def plot_domain(gdf, domain, savefig=False):
         column_to_plot = f'summed_indicators_{domain}domain_min_max_standardized'
 
         # Check if the alternative column exists in the GeoDataFrame
-        if 'loss_exposure_product_min_max_standardized' in gdf.columns:
-            column_to_plot = 'loss_exposure_product_min_max_standardized'
+        if 'all_domain_loss_exposure_product_min_max_standardized' in gdf.columns:
+            column_to_plot = 'all_domain_loss_exposure_product_min_max_standardized'
 
         # Plot the data
         plot = gdf.plot(column=column_to_plot, 
@@ -316,8 +316,8 @@ def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, 
     column_to_plot = f'summed_indicators_{domain}domain_min_max_standardized'
 
     # Check if the alternative column exists in the GeoDataFrame
-    if 'loss_exposure_product_min_max_standardized' in gdf.columns:
-        column_to_plot = 'loss_exposure_product_min_max_standardized'
+    if 'all_domain_loss_exposure_product_min_max_standardized' in gdf.columns:
+        column_to_plot = 'all_domain_loss_exposure_product_min_max_standardized'
 
     # Plot the data
     df2_filtered.plot(column=column_to_plot, 

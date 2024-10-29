@@ -331,13 +331,13 @@ def weight_domains(df, society, built, natural):
     return df
 
 
-def calculate_index(df):
+def calculate_index(df, climate_column):
     '''Calcutes the Cal-CRAI index'''
     # divide by climate domain
-    df['calcrai_score'] = df['calcrai_weighted'] / df['climate_risk']
+    df['calcrai_score'] = df['calcrai_weighted'] / df[climate_column]
 
     # testing for 0 values --> divide error
-    df.loc[df['climate_risk'] == 0, 'calcrai_score'] = 0
+    df.loc[df[climate_column] == 0, 'calcrai_score'] = 0
     
     return df
 
