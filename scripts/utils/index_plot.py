@@ -176,7 +176,7 @@ def plot_domain(gdf, domain, savefig=False):
             fig.savefig(f'{figname}.png', format='png', dpi=300, bbox_inches='tight')
             print('Figure exported!')
 
-def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, savefig=False, font_color='black', domain='society_economy_', domain_label_map=None):
+def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, savefig=False, font_color='black', domain='society_economy_', domain_label_map=None, vmin=0, vmax=1, column_to_plot='all_domain_loss_exposure_product_min_max_standardized'):
     """
     Plots a domain score vulnerability for selected counties or regions, with the option to exclude features within a bounding box.
     
@@ -312,19 +312,12 @@ def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, 
     # Plot county boundaries
     county_boundaries.boundary.plot(ax=ax, linewidth=0.55, edgecolor='black')
 
-    # Define the column to plot
-    column_to_plot = f'summed_indicators_{domain}domain_min_max_standardized'
-
-    # Check if the alternative column exists in the GeoDataFrame
-    if 'all_domain_loss_exposure_product_min_max_standardized' in gdf.columns:
-        column_to_plot = 'all_domain_loss_exposure_product_min_max_standardized'
-
     # Plot the data
     df2_filtered.plot(column=column_to_plot, 
                       ax=ax, 
-                      vmin=0, vmax=1, 
+                      vmin=vmin, vmax=vmax, 
                       legend=True, 
-                      cmap='RdYlBu_r', 
+                      cmap='RdYlBu', 
                       legend_kwds={'label': 'Vulnerability (larger values are more vulnerable)', 'orientation': 'horizontal', 'shrink': 0.9})
 
     # Suppress specific UserWarning messages
