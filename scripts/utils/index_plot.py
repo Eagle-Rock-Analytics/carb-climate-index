@@ -72,27 +72,43 @@ def _id_county_label(county_code, label):
         '115': 'Yuba'
     }
 
-def index_plot(df, scenario=None, save=False, save_name = False, vmin=-3, vmax=3):
-    '''Maps the Cal-CRAI index value for entire state'''
+def index_plot(df, column, scenario=None, save=False, save_name=None, plot_type='continuous', vmin=-3, vmax=3):
+    '''Maps the Cal-CRAI index value for the entire state'''
 
-    # plotting help
+    # Merging with geographical boundaries
     df2 = df.merge(ca_boundaries, on='GEOID')
     df2['geometry'] = df2['geometry']
     df2 = gpd.GeoDataFrame(df2, geometry='geometry', crs=4269)
 
-    # set-up figure
-    fig, ax = plt.subplots(1, 1, figsize=(4.5,6), layout='compressed')
+    # Set up figure
+    fig, ax = plt.subplots(1, 1, figsize=(4.5, 6), layout='compressed')
 
-    df2.plot(column='calcrai_score', ax=ax, vmin=vmin, vmax=vmax, legend=True, cmap='RdYlBu',
-                     legend_kwds={'label':'Cal-CRAI Index value', 'orientation': 'horizontal', 'shrink':0.7});
+    # Check plot type and set plotting parameters accordingly
+    if plot_type == 'discrete':
+        # For discrete values (1-5), use discrete colormap
+        df2.plot(column=column, ax=ax, legend=True, cmap='RdYlBu', categorical=True)
+        ax.get_legend().set_title("Cal-CRAI Binned Values \n (20% increments)")
+    else:
+        # For continuous values, use continuous colormap
+        sm = df2.plot(column=column, ax=ax, vmin=vmin, vmax=vmax, cmap='RdYlBu', legend=False)
 
-    if scenario == None:
-        plt.annotate('Equal-weighted domains'.format(scenario), xy=(0.02, 0.02), xycoords='axes fraction')
-    if scenario != None:
+        # Create a colorbar manually and set the title
+        cbar = fig.colorbar(sm.collections[0], ax=ax, orientation='horizontal')
+        cbar.set_label("Cal-CRAI Index Value")
+
+    # Annotation for scenario
+    if scenario is None:
+        plt.annotate('Equal-weighted domains', xy=(0.02, 0.02), xycoords='axes fraction')
+    else:
         plt.annotate('Weighting for {}'.format(scenario), xy=(0.02, 0.02), xycoords='axes fraction')
 
+    # Save figure if required
     if save:
-        fig.savefig(f'{save_name}.png', dpi=300, bbox_inches='tight') ## need to replace fig name once data repo completed
+        if save_name is None:
+            save_name = column  # Default save name to column if not provided
+        fig.savefig(f'{save_name}.png', dpi=300, bbox_inches='tight')  # Save the figure
+
+    plt.show()  # Show the plot
 
 def index_domain_plot(df, scenario=None, society=1, built=1, natural=1, save=False):
     '''Produces subplots of the Cal-CRAI index value and the corresponding domains'''
@@ -364,4 +380,62 @@ def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, 
     # Display the plot
     plt.show()
 
-    
+    def index_weighting_plot_ranking(df, ca_boundaries, save=False):
+        '''
+        Creates ranking plots (1-5) with distinct colors for each scenario in the provided dataframe.
+        '''
+        # Automatically detect score columns by excluding 'GEOID'
+        score_columns = [col for col in df.columns if col != 'GEOID']
+
+        # Ensure score columns are numeric, converting errors to NaN
+        df[score_columns] = df[score_columns].apply(pd.to_numeric, errors='coerce')
+
+        # Fill NaN values with -inf to ensure they are ranked lowest
+        df[score_columns] = df[score_columns].fillna(-np.inf)
+
+        # Generate a color map for the scenarios
+        scenario_colors = dict(zip(score_columns, plt.cm.Set1.colors[:len(score_columns)]))
+
+        # Prepare the dataframe for ranking by calculating ranks within each row
+        rank_df = df[['GEOID']].copy()
+        rank_df[score_columns] = df[score_columns]
+
+        # Sort each row’s values and get the top 5 columns for each GEOID
+        ranked_columns = rank_df[score_columns].apply(lambda x: x.nlargest(5).index.tolist(), axis=1)
+        ranked_scores = rank_df[score_columns].apply(lambda x: x.nlargest(5).tolist(), axis=1)
+            
+        # Create columns for each rank's scenario and score
+        for i in range(5):
+            rank_df.loc[:, f'rank_{i+1}_scenario'] = [col[i] for col in ranked_columns]
+            rank_df.loc[:, f'rank_{i+1}_score'] = [score[i] for score in ranked_scores]
+
+        # Merge with California boundaries for plotting
+        df2 = rank_df.merge(ca_boundaries, on='GEOID')
+        df2 = gpd.GeoDataFrame(df2, geometry='geometry', crs=4269)
+
+        # Generate and save ranking plots (1-5)
+        for rank in range(1, 6):
+            fig, ax = plt.subplots(1, 1, figsize=(6, 8))
+
+            # Prepare a column that assigns color based on the scenario for the current rank
+            df2['color'] = df2[f'rank_{rank}_scenario'].map(scenario_colors)
+
+            # Plot each geometry with its assigned color, suppressing the legend
+            df2.plot(ax=ax, color=df2['color'], edgecolor='k', legend=False)
+
+            # Manually create custom legend to avoid unwanted entries
+            handles = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=color, markersize=8)
+                    for color in scenario_colors.values()]
+            labels = scenario_colors.keys()
+
+            # Only add a legend if there are labels to show
+            if labels:
+                ax.legend(handles, labels, title=f'Rank {rank} Scenario', loc='upper left')
+
+            plt.annotate(f'Rank {rank} Cal-CRAI Index by Scenario', xy=(0.02, 0.02), xycoords='axes fraction')
+
+            # Save the figure if required
+            if save:
+                fig.savefig(f'rank_{rank}_crai_index.png', dpi=300, bbox_inches='tight')
+
+        plt.show()

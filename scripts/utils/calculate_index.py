@@ -303,11 +303,11 @@ def process_domain_csv_files(prefix, input_folder, output_folder, meta_csv, merg
     print(f"Processed CSV saved as {merged_output_file}")
     return metric_vulnerable_resilient_dict
 
-def print_index_summary(df):
-    print('Min score / less resilience: ', df['calcrai_score'].min())
-    print('Max score / more resilience: ', df['calcrai_score'].max())
-    print('Mean score / average resilience: ', df['calcrai_score'].mean())
-    print('Median score / median resilience: ', df['calcrai_score'].median())
+def print_index_summary(df, column):
+    print('Min score / less resilience: ', df[column].min())
+    print('Max score / more resilience: ', df[column].max())
+    print('Mean score / average resilience: ', df[column].mean())
+    print('Median score / median resilience: ', df[column].median())
 
 
 def weight_domains(df, society, built, natural):
@@ -390,8 +390,8 @@ def handle_outliers(df, domain_prefix, summary_stats=True, print_all_vals=False)
 
         if summary_stats:
             print(f'For column {column}:')
-            print(f'  Q1 (10th percentile): {Q1}')
-            print(f'  Q3 (90th percentile): {Q3}')
+            print(f'  Q1 (25th percentile): {Q1}')
+            print(f'  Q3 (75th percentile): {Q3}')
             print(f'  IQR: {IQR}')
             print(f'  Max fence: {max_fence}')
             print(f'  Min fence: {min_fence}')
