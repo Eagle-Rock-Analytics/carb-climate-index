@@ -303,16 +303,22 @@ def process_domain_csv_files(prefix, input_folder, output_folder, meta_csv, merg
     print(f"Processed CSV saved as {merged_output_file}")
     return metric_vulnerable_resilient_dict
 
+def print_index_summary(df, column):
+    print('Min score / less resilience: ', df[column].min())
+    print('Max score / more resilience: ', df[column].max())
+    print('Mean score / average resilience: ', df[column].mean())
+    print('Median score / median resilience: ', df[column].median())
+
 
 def weight_domains(df, society, built, natural):
     '''
     Calculates the weighting scheme, based on input parameters:
     society, built, and natural
     '''
-    governance_col = 'DUMMY_governance_summed_indicators_min_max_standardized'
-    society_adjusted_col = 'DUMMY_society_tract_adjusted'
-    built_adjusted_col = 'DUMMY_built_tract_adjusted'
-    natural_adjusted_col = 'DUMMY_natural_tract_adjusted' 
+    governance_col = 'governance_domain_index'
+    society_adjusted_col = 'society_economy_tract_adjusted'
+    built_adjusted_col = 'built_tract_adjusted'
+    natural_adjusted_col = 'natural_systems_tract_adjusted' 
 
     weighting = (
         df[governance_col] + 
@@ -325,13 +331,13 @@ def weight_domains(df, society, built, natural):
     return df
 
 
-def calculate_index(df):
+def calculate_index(df, climate_column):
     '''Calcutes the Cal-CRAI index'''
-    
-    df['calcrai_score'] = df['calcrai_weighted'] / df['acute_risk']
+    # divide by climate domain
+    df['calcrai_score'] = df['calcrai_weighted'] / df[climate_column]
 
     # testing for 0 values --> divide error
-    df.loc[df['acute_risk'] == 0, 'calcrai_score'] = 0
+    df.loc[df[climate_column] == 0, 'calcrai_score'] = 0
     
     return df
 
@@ -354,34 +360,6 @@ def format_df(df):
     return df
 
 def handle_outliers(df, domain_prefix, summary_stats=True, print_all_vals=False):
-
-    metric_columns_to_skip = {
-        'vulnerable_populations' : ['asthma', 
-                                    'cardiovascular_disease', 
-                                    'birth_weight',
-                                    'education',
-                                    'linguistic',
-                                    'poverty', 
-                                    'unemployment',
-                                    'housing_burden',
-                                    'imp_water_bodies',
-                                    'homeless',
-                                    'health_insurance',
-                                    'ambulatory_disabilities',
-                                    'cognitive_disabilities',
-                                    'air conditioning',
-                                    'Violent Crimes',
-                                    'working outdoors', 
-                                    '1miurban_10mirural',
-                                    'american_indian',
-                                    'over_65',
-                                    'under_5',
-                                    'household_financial_assistance']
-                                    }
-    
-    # Flatten the dictionary to get a list of words to skip
-    words_to_skip = set(word for sublist in metric_columns_to_skip.values() for word in sublist)
-    
     # Convert all columns except 'GEOID' to numeric
     for column in df.columns:
         if column != 'GEOID':
@@ -390,7 +368,7 @@ def handle_outliers(df, domain_prefix, summary_stats=True, print_all_vals=False)
     # Columns to process (exclude 'GEOID' and those containing words to skip)
     columns_to_process = [
         col for col in df.columns 
-        if col != 'GEOID' and not any(word in col for word in words_to_skip)
+        if col != 'GEOID'
     ]
     # Dictionary to store counts of adjusted rows
     adjusted_counts = {}
@@ -399,8 +377,8 @@ def handle_outliers(df, domain_prefix, summary_stats=True, print_all_vals=False)
         # Convert the column to numeric, forcing any errors to NaN
         df[column] = pd.to_numeric(df[column], errors='coerce')
         
-        Q1 = df[column].quantile(0.10)
-        Q3 = df[column].quantile(0.90)
+        Q1 = df[column].quantile(0.25)
+        Q3 = df[column].quantile(0.75)
         IQR = Q3 - Q1
 
         if IQR == 0:
@@ -412,8 +390,8 @@ def handle_outliers(df, domain_prefix, summary_stats=True, print_all_vals=False)
 
         if summary_stats:
             print(f'For column {column}:')
-            print(f'  Q1 (10th percentile): {Q1}')
-            print(f'  Q3 (90th percentile): {Q3}')
+            print(f'  Q1 (25th percentile): {Q1}')
+            print(f'  Q3 (75th percentile): {Q3}')
             print(f'  IQR: {IQR}')
             print(f'  Max fence: {max_fence}')
             print(f'  Min fence: {min_fence}')
@@ -439,7 +417,7 @@ def handle_outliers(df, domain_prefix, summary_stats=True, print_all_vals=False)
     # close out
     handle_outlier_csv = "no_outlier_{}metrics.csv".format(domain_prefix)
     print(f"Processed and saved {handle_outlier_csv} with outlier handling.")
-    df.to_csv(handle_outlier_csv, index=False)
+    #df.to_csv(handle_outlier_csv, index=False)
     
     # Print the adjusted counts
     if summary_stats:
