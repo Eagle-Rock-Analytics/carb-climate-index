@@ -328,6 +328,13 @@ def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, 
     # Plot county boundaries
     county_boundaries.boundary.plot(ax=ax, linewidth=0.55, edgecolor='black')
 
+    # Define the column to plot
+    column_to_plot = f'summed_indicators_{domain}domain_min_max_standardized'
+
+    # Check if the alternative column exists in the GeoDataFrame
+    if 'climate_risk_min_max_standardized' in gdf.columns:
+        column_to_plot = 'climate_risk_min_max_standardized'
+
     # Plot the data
     df2_filtered.plot(column=column_to_plot, 
                       ax=ax, 
