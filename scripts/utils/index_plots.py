@@ -3,7 +3,7 @@ import geopandas as gpd
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
-from shapely.geometry import box
+from shapely.geometry import box # type: ignore
 
 census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/"
 ca_boundaries = gpd.read_file(census_shp_dir)
