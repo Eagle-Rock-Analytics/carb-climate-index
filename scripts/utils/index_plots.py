@@ -173,15 +173,15 @@ def plot_domain(gdf, domain, savefig=False):
                 ax=ax, 
                 vmin=0, vmax=1, 
                 legend=True, 
-                cmap='RdYlBu_r',
-                legend_kwds={'label': 'Vulnerability (larger values are more vulnerable)', 'orientation': 'horizontal', 'shrink': 1.0, 'pad': 0.03})
+                cmap='Greens',
+                legend_kwds={'label': 'Resilience (larger values are more resilient)', 'orientation': 'horizontal', 'shrink': 1.0, 'pad': 0.03})
         
         # Set title
         # Adjust the domain string to replace underscores with spaces and capitalize each word
         formatted_domain = domain.replace('_', ' ').title()
 
         # Set the plot title using the formatted domain string
-        ax.set_title(f'Cal-CRAI: {formatted_domain} Domain', fontsize=16.5)
+        ax.set_title(f'Cal-CRAI: {formatted_domain}Domain', fontsize=16.5)
 
         # Display the plot
         plt.show()
@@ -194,7 +194,7 @@ def plot_domain(gdf, domain, savefig=False):
 
 def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, savefig=False, font_color='black', domain='society_economy_', domain_label_map=None, vmin=0, vmax=1, column_to_plot='all_domain_loss_exposure_product_min_max_standardized'):
     """
-    Plots a domain score vulnerability for selected counties or regions, with the option to exclude features within a bounding box.
+    Plots a domain score resilience for selected counties or regions, with the option to exclude features within a bounding box.
     
     Parameters:
     -----------
@@ -266,13 +266,13 @@ def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, 
     # Set counties_to_plot based on the specified region or plot_all flag
     if plot_all:
         counties_to_plot = list(county_labels.keys())
-        title = f'Vulnerability Index of All Counties in California - {domain_name}'
+        title = f'Resiliency Index of All Counties in California - {domain_name}'
     elif region:
         counties_to_plot = regions.get(region, [])
         region_name = region.replace('_', ' ').title()  # Capitalize the region name for display
-        title = f'Vulnerability Index of California\'s {region_name} - {domain_name}'
+        title = f'Resiliency Index of California\'s {region_name} - {domain_name}'
     else:
-        title = f'Vulnerability Index of Selected Counties \n {domain_name}'
+        title = f'Resiliency Index of Selected Counties \n {domain_name}'
 
     # Load the census tract data
     census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/"
@@ -329,19 +329,17 @@ def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, 
     county_boundaries.boundary.plot(ax=ax, linewidth=0.55, edgecolor='black')
 
     # Define the column to plot
-    column_to_plot = f'summed_indicators_{domain}domain_min_max_standardized'
-
-    # Check if the alternative column exists in the GeoDataFrame
-    if 'climate_risk_min_max_standardized' in gdf.columns:
-        column_to_plot = 'climate_risk_min_max_standardized'
+    if column_to_plot == None:
+        column_to_plot = f'summed_indicators_{domain}domain_min_max_standardized'
 
     # Plot the data
     df2_filtered.plot(column=column_to_plot, 
                       ax=ax, 
                       vmin=vmin, vmax=vmax, 
                       legend=True, 
-                      cmap='RdYlBu', 
-                      legend_kwds={'label': 'Vulnerability (larger values are more vulnerable)', 'orientation': 'horizontal', 'shrink': 0.9})
+                      cmap='Greens', 
+                      legend_kwds={'label': 'Resiliency (larger values are more resiliency)', 'orientation': 'horizontal', 'shrink': 0.9,
+                                   'shrink': 1.0, 'pad': 0.03})
 
     # Suppress specific UserWarning messages
     warnings.filterwarnings("ignore", message="Geometry is in a geographic CRS. Results from 'area' are likely incorrect.")
