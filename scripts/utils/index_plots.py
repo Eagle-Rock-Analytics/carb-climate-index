@@ -8,7 +8,6 @@ from shapely.geometry import box # type: ignore
 census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/"
 ca_boundaries = gpd.read_file(census_shp_dir)
 
-
 # Dictionary mapping county codes to labels
 def _id_county_label(county_code, label):
     county_labels = {
@@ -90,7 +89,7 @@ def index_plot(df, column, scenario=None, save=False, save_name=None, plot_type=
         ax.get_legend().set_title("Cal-CRAI Binned Values \n (20% increments)")
     else:
         # For continuous values, use continuous colormap
-        sm = df2.plot(column=column, ax=ax, vmin=vmin, vmax=vmax, cmap='RdYlBu', legend=False)
+        sm = df2.plot(column=column, ax=ax, vmin=vmin, vmax=vmax, cmap='RdYlBu_r', legend=False)
 
         # Create a colorbar manually and set the title
         cbar = fig.colorbar(sm.collections[0], ax=ax, orientation='horizontal')
