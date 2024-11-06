@@ -89,7 +89,7 @@ def index_plot(df, column, scenario=None, save=False, save_name=None, plot_type=
         ax.get_legend().set_title("Cal-CRAI Binned Values \n (20% increments)")
     else:
         # For continuous values, use continuous colormap
-        sm = df2.plot(column=column, ax=ax, vmin=vmin, vmax=vmax, cmap='RdYlBu_r', legend=False)
+        sm = df2.plot(column=column, ax=ax, vmin=vmin, vmax=vmax, cmap='RdYlBu', legend=False)
 
         # Create a colorbar manually and set the title
         cbar = fig.colorbar(sm.collections[0], ax=ax, orientation='horizontal')
@@ -191,7 +191,16 @@ def plot_domain(gdf, domain, savefig=False):
             fig.savefig(f'{figname}.png', format='png', dpi=300, bbox_inches='tight')
             print('Figure exported!')
 
-def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, savefig=False, font_color='black', domain='society_economy_', domain_label_map=None, vmin=0, vmax=1, column_to_plot='all_domain_loss_exposure_product_min_max_standardized'):
+def plot_region_domain(gdf, 
+                       counties_to_plot=None,
+                       region=None, plot_all=False,
+                       savefig=False, font_color='black',
+                       domain='society_economy_',
+                       domain_label_map=None, 
+                       vmin=0, vmax=1, 
+                       column_to_plot='all_domain_loss_exposure_product_min_max_standardized',
+                       cmap = 'Greens',
+                       intro_title = 'Resiliency Index'):
     """
     Plots a domain score resilience for selected counties or regions, with the option to exclude features within a bounding box.
     
@@ -265,13 +274,22 @@ def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, 
     # Set counties_to_plot based on the specified region or plot_all flag
     if plot_all:
         counties_to_plot = list(county_labels.keys())
-        title = f'Resiliency Index of All Counties in California - {domain_name}'
+        if domain_name == '':
+            title = f'{intro_title} of All Counties in California'
+        else:
+            title = f'{intro_title} of All Counties in California - {domain_name}'
+        
     elif region:
         counties_to_plot = regions.get(region, [])
         region_name = region.replace('_', ' ').title()  # Capitalize the region name for display
-        title = f'Resiliency Index of California\'s {region_name} - {domain_name}'
+        
+        if domain_name == '':
+            title = f'{intro_title} of California\'s {region_name}'
+        else:
+            title = f'{intro_title} of California\'s {region_name} - {domain_name}'
+
     else:
-        title = f'Resiliency Index of Selected Counties \n {domain_name}'
+        title = f'{intro_title} of Selected Counties \n {domain_name}'
 
     # Load the census tract data
     census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/"
@@ -336,9 +354,9 @@ def plot_region_domain(gdf, counties_to_plot=None, region=None, plot_all=False, 
                       ax=ax, 
                       vmin=vmin, vmax=vmax, 
                       legend=True, 
-                      cmap='Greens', 
-                      legend_kwds={'label': 'Resiliency (larger values are more resiliency)', 'orientation': 'horizontal', 'shrink': 0.9,
-                                   'shrink': 1.0, 'pad': 0.03})
+                      cmap=cmap, 
+                      legend_kwds={'label': f'{intro_title} (larger values are more resiliency)', 'orientation': 'horizontal', 'shrink': 0.9,
+                                   'shrink': 1.0, 'pad': 0.04})
 
     # Suppress specific UserWarning messages
     warnings.filterwarnings("ignore", message="Geometry is in a geographic CRS. Results from 'area' are likely incorrect.")
