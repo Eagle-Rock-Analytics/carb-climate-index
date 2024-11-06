@@ -85,11 +85,11 @@ def index_plot(df, column, scenario=None, save=False, save_name=None, plot_type=
     # Check plot type and set plotting parameters accordingly
     if plot_type == 'discrete':
         # For discrete values (1-5), use discrete colormap
-        df2.plot(column=column, ax=ax, legend=True, cmap='RdYlBu', categorical=True)
+        df2.plot(column=column, ax=ax, legend=True, cmap='YlGnBu', categorical=True)
         ax.get_legend().set_title("Cal-CRAI Binned Values \n (20% increments)")
     else:
         # For continuous values, use continuous colormap
-        sm = df2.plot(column=column, ax=ax, vmin=vmin, vmax=vmax, cmap='RdYlBu_r', legend=False)
+        sm = df2.plot(column=column, ax=ax, vmin=vmin, vmax=vmax, cmap='YlGnBu', legend=False)
 
         # Create a colorbar manually and set the title
         cbar = fig.colorbar(sm.collections[0], ax=ax, orientation='horizontal')
@@ -126,7 +126,7 @@ def index_domain_plot(df, scenario=None, society=1, built=1, natural=1, save=Fal
     vmax=3
     dmin=-1
     dmax=1
-    cm='RdYlBu'
+    cm='YlGnBu'
 
     df2.plot(ax=ax1, column='calcrai_score', vmin=vmin, vmax=vmax, legend=True, cmap=cm,
              legend_kwds={'label':'Cal-CRAI Index value', 'orientation': 'horizontal', 'shrink':0.7});
