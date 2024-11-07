@@ -331,7 +331,7 @@ def weight_domains(df, society, built, natural):
     return df
 
 
-def calculate_index(df, climate_column):
+def calculate_weighted_index(df, climate_column):
     '''Calcutes the Cal-CRAI index'''
     # divide by climate domain
     df['calcrai_score'] = df['calcrai_weighted'] / df[climate_column]
@@ -341,6 +341,28 @@ def calculate_index(df, climate_column):
     
     return df
 
+def calculate_unweighted_index(df, society, built, natural):
+    '''Calcutes the Cal-CRAI index'''
+    governance_col = 'governance_domain_index'
+    society_adjusted_col = 'society_economy_tract_adjusted'
+    built_adjusted_col = 'built_tract_adjusted'
+    natural_adjusted_col = 'natural_systems_tract_adjusted' 
+
+    weighting = (
+        df[governance_col] + 
+        (society * (df[society_adjusted_col] * df[governance_col])) +
+        (built * (df[built_adjusted_col] * df[governance_col])) +
+        (natural * (df[natural_adjusted_col] * df[governance_col]))
+    )
+    df['calcrai_weighted'] = weighting
+
+    # divide by climate domain
+    df['calcrai_score'] = df['calcrai_weighted'] / df['climate_risk']
+
+    # testing for 0 values --> divide error
+    df.loc[df['climate_risk'] == 0, 'calcrai_score'] = 0
+    
+    return df
 
 def format_df(df):
     '''
