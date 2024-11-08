@@ -86,10 +86,10 @@ def index_plot(df, column, scenario=None, save=False, save_name=None, plot_type=
     if plot_type == 'discrete':
         # For discrete values (1-5), use discrete colormap
         df2.plot(column=column, ax=ax, legend=True, cmap='YlGnBu', categorical=True)
-        ax.get_legend().set_title("Cal-CRAI Binned Values \n (20% increments)")
+        ax.get_legend().set_title("Cal-CRAI Resiliency Percentiles")
     else:
         # For continuous values, use continuous colormap
-        sm = df2.plot(column=column, ax=ax, vmin=vmin, vmax=vmax, cmap='YlGnBu', legend=False)
+        sm = df2.plot(column=column, ax=ax, vmin=vmin, vmax=vmax, cmap='bwr_r', legend=False)
 
         # Create a colorbar manually and set the title
         cbar = fig.colorbar(sm.collections[0], ax=ax, orientation='horizontal')
@@ -198,7 +198,7 @@ def plot_region_domain(gdf,
                        domain='society_economy_',
                        domain_label_map=None, 
                        vmin=0, vmax=1, 
-                       column_to_plot='all_domain_loss_exposure_product_min_max_standardized',
+                       column_to_plot=None,
                        cmap = 'Greens',
                        intro_title = 'Resiliency Index'):
     """
@@ -348,6 +348,8 @@ def plot_region_domain(gdf,
     # Define the column to plot
     if column_to_plot == None:
         column_to_plot = f'summed_indicators_{domain}domain_min_max_standardized'
+    else:
+        column_to_plot = 'all_domain_loss_exposure_product_min_max_standardized'
 
     # Plot the data
     df2_filtered.plot(column=column_to_plot, 
@@ -355,7 +357,7 @@ def plot_region_domain(gdf,
                       vmin=vmin, vmax=vmax, 
                       legend=True, 
                       cmap=cmap, 
-                      legend_kwds={'label': f'{intro_title} (larger values are more resiliency)', 'orientation': 'horizontal', 'shrink': 0.9,
+                      legend_kwds={'label': f'{intro_title} (larger values are more resilient)', 'orientation': 'horizontal', 'shrink': 0.9,
                                    'shrink': 1.0, 'pad': 0.04})
 
     # Suppress specific UserWarning messages
