@@ -71,7 +71,7 @@ def _id_county_label(county_code, label):
         '115': 'Yuba'
     }
 
-def index_plot(df, column, scenario=None, save=False, save_name=None, plot_type='continuous', vmin=-3, vmax=3):
+def index_plot(df, column, scenario=None, plot_title=False, save=False, save_name=None, plot_type='continuous', vmin=-3, vmax=3):
     '''Maps the Cal-CRAI index value for the entire state'''
 
     # Merging with geographical boundaries
@@ -100,6 +100,8 @@ def index_plot(df, column, scenario=None, save=False, save_name=None, plot_type=
         plt.annotate('Equal-weighted domains', xy=(0.02, 0.02), xycoords='axes fraction')
     else:
         plt.annotate('Weighting for {}'.format(scenario), xy=(0.02, 0.02), xycoords='axes fraction')
+        if plot_title == True:
+                ax.set_title(f'Cal-CRAI: {scenario.title()} Scenario', fontsize=16.5)
 
     # Save figure if required
     if save:
@@ -144,6 +146,49 @@ def index_domain_plot(df, scenario=None, society=1, built=1, natural=1, save=Fal
 
     if save:
         fig.savefig('dummy_ca_domains_map.png', dpi=300, bbox_inches='tight') ## need to replace fig name once data repo completed
+
+def plot_climate_domains(df, column_to_plot, domain='', savefig=False):
+
+    # Merging with geographical boundaries
+    df2 = df.merge(ca_boundaries, on='GEOID')
+    df2['geometry'] = df2['geometry']
+    df2 = gpd.GeoDataFrame(df2, geometry='geometry', crs=4269)
+
+    # Check for invalid geometries
+    if len(df2) == 0:
+        print('No valid geometries. Cannot plot.')
+    else:
+        # Set up the figure
+        fig, ax = plt.subplots(1, 1, figsize=(4.5, 6), layout='compressed')
+
+        # Plot the data
+        df2.plot(
+            column=column_to_plot,
+            ax=ax,
+            vmin=0, vmax=1,
+            cmap='Blues'
+        )
+
+        # Create an inset axis for the colorbar inside the plot area (horizontal)
+        cbar_ax = ax.inset_axes([0.48, 0.92, 0.48, 0.03])  # [x, y, width, height]
+        sm = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=0, vmax=1))
+        sm._A = []  # Required for the ScalarMappable
+        cbar = fig.colorbar(sm, cax=cbar_ax, orientation='horizontal')
+        cbar.set_label('Resilience', fontsize=10)
+
+        # Set title
+        formatted_domain = domain.replace('_', ' ').title()
+        ax.set_title(f'{formatted_domain} Risk Domain', fontsize=16.5)
+
+        # Display the plot
+        plt.show()
+
+        # Export figure
+        if savefig:
+            figname = f'{domain}_domain_figure'
+            fig.savefig(f'{figname}.png', format='png', dpi=300, bbox_inches='tight')
+            print('Figure exported!')
+
 
 def domain_plot_weighting(df, society, built, natural):
     '''In order to visualize the importance of weighting each domain'''
