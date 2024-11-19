@@ -8,6 +8,19 @@ import matplotlib.pyplot as plt
 
 # metric to indicator dictionaries
 def indicator_dicts(domain):
+    '''
+    Contains domain specific dictionaries that attribute a metric to its indicator.
+    
+    Parameters
+    ----------
+    domain: str
+        calls a specific metric to indicator dictionary for one of the five possible domains:
+            - 'society_economy'
+            - 'natural'
+            - 'built'
+            - 'governance'
+            - 'climate'
+    '''
     metric_to_indicator_society_dict = {
         'vulnerable_populations' : ['asthma', 
                                     'cardiovascular_disease', 
@@ -44,7 +57,6 @@ def indicator_dicts(domain):
                 'economic_health' : ['gini',
                                     'median_income',
                                     'hachman']}
-
     metric_to_indicator_built_dict = {
         'communication' :           ['low_internet',
                                     'cellular_towers',
@@ -69,7 +81,6 @@ def indicator_dicts(domain):
                                     'psps_event',
                                     'underground_transmission',
                                     'wastewater_facilities']}
-    
     metric_to_indicator_natural_dict = {
             'natural_resource_conservation' : ['protected_areas'],
 
@@ -304,16 +315,37 @@ def process_domain_csv_files(prefix, input_folder, output_folder, meta_csv, merg
     return metric_vulnerable_resilient_dict
 
 def print_index_summary(df, column):
+    '''
+    Calculates the min, max, mean, and median Cal-CRAI values from a specified dataframe column.
+    
+    Parameters
+    ----------
+    df: DataFrame
+        Input dataframe
+    column: str
+        Column in which summary stats are to be calculated on
+    '''
+
     print('Min score / less resilience: ', df[column].min())
     print('Max score / more resilience: ', df[column].max())
     print('Mean score / average resilience: ', df[column].mean())
     print('Median score / median resilience: ', df[column].median())
 
-
 def weight_domains(df, society, built, natural):
     '''
-    Calculates the weighting scheme, based on input parameters:
-    society, built, and natural
+    Calculates the weighted numerator portion of the Cal-CRAI, based on input parameters:
+    society, built, and natural.
+    
+    Parameters
+    ----------
+    df: Dataframe
+        Input dataframe
+    society: int
+        Weighting modifier for society domain
+    built: int
+        Weighting modifier for built domain
+    natural: int
+        Weighting modifier for natural domain
     '''
     governance_col = 'governance_domain_index'
     society_adjusted_col = 'society_economy_tract_adjusted'
@@ -332,7 +364,17 @@ def weight_domains(df, society, built, natural):
 
 
 def calculate_weighted_index(df, climate_column):
-    '''Calcutes the Cal-CRAI index'''
+    '''
+    Calcutes the weighted scenario(s) for the Cal-CRAI with 'calcrai_weighted' being the
+    presumed numerator column name in the input dataframe.
+    
+    Parameters
+    ----------
+    df: DataFrame
+        Input dataframe  
+    climate_column: str
+        Climate column residing within the input df, it is the denominator of the Cal-CRAI calculation
+    '''
     # divide by climate domain
     df['calcrai_score'] = df['calcrai_weighted'] / df[climate_column]
 
