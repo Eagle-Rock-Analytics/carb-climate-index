@@ -6,7 +6,6 @@ import numpy as np
 import geopandas as gpd
 import matplotlib.pyplot as plt
 
-# metric to indicator dictionaries
 def indicator_dicts(domain):
     '''
     Contains domain specific dictionaries that attribute a metric to its indicator.
@@ -333,7 +332,7 @@ def print_index_summary(df, column):
 
 def weight_domains(df, society, built, natural):
     '''
-    Calculates the weighted numerator portion of the Cal-CRAI, based on input parameters:
+    Calculates the weighted numerator portion of the Cal-CRAI, based on numeric input parameters:
     society, built, and natural.
     
     Parameters
@@ -362,7 +361,6 @@ def weight_domains(df, society, built, natural):
     df['calcrai_weighted'] = weighting
     return df
 
-
 def calculate_weighted_index(df, climate_column):
     '''
     Calcutes the weighted scenario(s) for the Cal-CRAI with 'calcrai_weighted' being the
@@ -383,8 +381,16 @@ def calculate_weighted_index(df, climate_column):
     
     return df
 
-def calculate_unweighted_index(df, society, built, natural):
-    '''Calcutes the Cal-CRAI index'''
+def calculate_equal_weighted_index(df):
+    '''
+    Calculates the equally weighted scenario for the Cal-CRAI with each domain coefficient
+    within the calculation being '1'.
+    
+    Parameters
+    ----------
+    df: DataFrame
+        Input dataframe  
+    '''
     governance_col = 'governance_domain_index'
     society_adjusted_col = 'society_economy_tract_adjusted'
     built_adjusted_col = 'built_tract_adjusted'
@@ -392,9 +398,9 @@ def calculate_unweighted_index(df, society, built, natural):
 
     weighting = (
         df[governance_col] + 
-        (society * (df[society_adjusted_col] * df[governance_col])) +
-        (built * (df[built_adjusted_col] * df[governance_col])) +
-        (natural * (df[natural_adjusted_col] * df[governance_col]))
+        (1 * (df[society_adjusted_col] * df[governance_col])) +
+        (1 * (df[built_adjusted_col] * df[governance_col])) +
+        (1 * (df[natural_adjusted_col] * df[governance_col]))
     )
     df['calcrai_weighted'] = weighting
 
@@ -410,6 +416,11 @@ def format_df(df):
     '''
     Minor clean-up of pandas df -- can be resolved in future version
     Demo purposes only, at present
+
+    Parameters
+    ----------
+    df: DataFrame
+        Input dataframe  
     '''
     if "field_1" in df.columns:
         df = df.drop(columns='field_1') # drops extra field
@@ -424,6 +435,25 @@ def format_df(df):
     return df
 
 def handle_outliers(df, domain_prefix, summary_stats=True, print_all_vals=False):
+    '''
+    Identifies 25th and 75th percentiles, then calculates the interquartile range
+    for all columns not named 'GEOID'. Upper and lower fences are created by multiplying
+    the IQR by 3 and -3 respectively. Values within each column that exceed its fencing range
+    are adjusted to that fence value.  
+    
+    Parameters
+    ----------
+    df: DataFrame
+        Input dataframe
+    domain_prefix: str
+        domain prefix name, strictly to name the output csv file
+    summary_stats: bool
+        True/False boolean (default is True) that prints number of values that were fenced 
+        for exceeding the bounds.
+    print_all_vals: bool
+        True/False boolean (default is False) that prints fencing values for each column. 
+    '''
+
     # Convert all columns except 'GEOID' to numeric
     for column in df.columns:
         if column != 'GEOID':
@@ -584,18 +614,22 @@ def compute_averaged_indicators(df, metric_to_indicator_dict):
 
 def compute_summed_climate_indicators(df, metric_to_indicator_dict):
     '''
-
+    Computes the sum of columns grouped together based on keywords for 
+    exposure or loss indicators within the climate domain using a dictionary,
+    then stores the result in a new DataFrame.
+    
     Parameters
     ----------
     df : DataFrame
         Input DataFrame with standardized metrics.
     metric_to_indicator_dict : dict
-        Dictionary where keys are indicator names and values are lists of keywords to match column names.
+        Dictionary where keys are indicator names and values
+        are lists of keywords to match column names.
     
     Returns
     -------
     DataFrame
-        DataFrame with averaged indicators and 'GEOID' column.
+        DataFrame with summed climate indicators and 'GEOID' column.
     '''
     
     # Create an empty DataFrame to store the results
@@ -623,7 +657,8 @@ def compute_summed_climate_indicators(df, metric_to_indicator_dict):
 
 def compute_summed_indicators(df, columns_to_sum, domain_prefix):
     '''
-    Computes the sum of the specified columns in the input DataFrame and stores the result in a new DataFrame.
+    Computes the sum of the specified columns in the input DataFrame and 
+    stores the result in a new DataFrame.
 
     Parameters
     ----------
@@ -666,9 +701,15 @@ def compute_summed_indicators(df, columns_to_sum, domain_prefix):
 
     return summed_indicators_df
 
-
 def add_census_tracts(df):
-    '''merges the census tract boundaries to the processed dataframe'''
+    '''
+    Merges the census tract boundaries to the processed dataframe.
+    
+    Parameters
+    ----------
+    df : DataFrame
+        Input DataFrame with standardized metrics.
+    '''
 
     # read in census tracts
     census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/"
@@ -683,8 +724,17 @@ def add_census_tracts(df):
 
     return gdf
 
-
 def domain_summary_stats(gdf, column):
-    # summary stats
+    '''
+    Merges the census tract boundaries to the processed dataframe.
+    
+    Parameters
+    ----------
+    gdf : GeoDataFrame
+        Input GeoDataFrame following the merge withe census tract
+        geodataframe.
+    column : str
+        Name of the gdf domain score column you want stats for.
+    '''
     print(f'Median {column} domain value: {gdf[column].median()}')
     print(f'Mean {column} domain value: {gdf[column].mean()}')
