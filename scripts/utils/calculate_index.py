@@ -71,8 +71,6 @@ def indicator_dicts(domain):
                                     'wastewater_facilities']}
     
     metric_to_indicator_natural_dict = {
-            'natural_resource_conservation' : ['protected_areas'],
-
             'agricultural_productivity_conservation' : ['ssma',
                                                         'esi_mean'],
                                                         
@@ -81,7 +79,8 @@ def indicator_dicts(domain):
                                                 'impervious',
                                                 'vulnerable_soils',
                                                 'vulnerable_drought',
-                                                'vulnerable_fire']}
+                                                'vulnerable_fire',
+                                                'protected_areas']}
     metric_to_indicator_governance_dict = {
             'emergency_response' :  ['fire_stations',
                                     'medical_technicians',
