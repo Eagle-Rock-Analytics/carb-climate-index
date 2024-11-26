@@ -70,10 +70,37 @@ def _id_county_label(county_code, label):
         '113': 'Yolo',
         '115': 'Yuba'
     }
-
-def index_plot(df, column, scenario=None, plot_title=False, save=False, save_name=None, plot_type='continuous', vmin=-3, vmax=3):
-    '''Maps the Cal-CRAI index value for the entire state'''
-
+ 
+def index_plot(df, column, scenario=None, plot_title=False, save_name=None, plot_type='continuous', vmin=-3, vmax=3):
+    '''
+    Maps the Cal-CRAI index for the entire state, can do descrete or continuous mapping
+    depending on input column. 
+    
+    Parameters
+    ----------
+    df : DataFrame
+        input Dataframe
+    column : str
+        Cal-CRAI column
+    scenario : str
+        Default is None. If index column is a weighted value, the user can input
+        the name of the scenario to populate the figure title and annotation
+    plot_title : bool
+        Default is False, if using a scenario and want a title, set to True
+    save_name : str
+        Default is None, user can enter any string to save the figure as.
+    plot_type : str
+        Specifies the type of mapping for the plot. 
+        - 'continuous': Uses a gradient to represent a smooth range of values.
+        - 'discrete': Uses distinct colors to represent the binned data.
+        Default is 'continuous'.
+    vmin : int
+        if plot is continuous, set the minimum bounds of the color gradient
+        Default is -3
+    vmax : int
+        if plot is continuous, set the maximum bounds of the color gradient    
+        Default is 3
+    '''
     # Merging with geographical boundaries
     df2 = df.merge(ca_boundaries, on='GEOID')
     df2['geometry'] = df2['geometry']
@@ -104,9 +131,7 @@ def index_plot(df, column, scenario=None, plot_title=False, save=False, save_nam
                 ax.set_title(f'Cal-CRAI: {scenario.title()} Scenario', fontsize=16.5)
 
     # Save figure if required
-    if save:
-        if save_name is None:
-            save_name = column  # Default save name to column if not provided
+    if save_name:
         fig.savefig(f'{save_name}.png', dpi=300, bbox_inches='tight')  # Save the figure
 
     plt.show()  # Show the plot
@@ -148,7 +173,22 @@ def index_domain_plot(df, scenario=None, society=1, built=1, natural=1, save=Fal
         fig.savefig('dummy_ca_domains_map.png', dpi=300, bbox_inches='tight') ## need to replace fig name once data repo completed
 
 def plot_climate_domains(df, column_to_plot, domain='', savefig=False):
-
+    '''
+    Maps climate domain scores that contain the product values from summed risk and 
+    exposure indicators per climate risk scenario.
+    
+    Parameters
+    ----------
+    df : DataFrame
+        input Dataframe
+    column_to_plot : str
+        df's climate domain score column
+    domain : str
+        domain name, will go as the figre title
+    savefig : bool
+        if True, saves figure using the domain name as the save name
+        Default is False
+    '''
     # Merging with geographical boundaries
     df2 = df.merge(ca_boundaries, on='GEOID')
     df2['geometry'] = df2['geometry']
@@ -188,7 +228,6 @@ def plot_climate_domains(df, column_to_plot, domain='', savefig=False):
             figname = f'{domain}_domain_figure'
             fig.savefig(f'{figname}.png', format='png', dpi=300, bbox_inches='tight')
             print('Figure exported!')
-
 
 def domain_plot_weighting(df, society, built, natural):
     '''In order to visualize the importance of weighting each domain'''
@@ -394,7 +433,7 @@ def plot_region_domain(gdf,
     if column_to_plot == None:
         column_to_plot = f'summed_indicators_{domain}domain_min_max_standardized'
     else:
-        column_to_plot = 'all_domain_loss_exposure_product_min_max_standardized'
+        column_to_plot = column_to_plot
 
     # Plot the data
     df2_filtered.plot(column=column_to_plot, 
