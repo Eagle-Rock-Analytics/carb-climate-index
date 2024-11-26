@@ -433,7 +433,7 @@ def plot_region_domain(gdf,
     if column_to_plot == None:
         column_to_plot = f'summed_indicators_{domain}domain_min_max_standardized'
     else:
-        column_to_plot = 'all_domain_loss_exposure_product_min_max_standardized'
+        column_to_plot = column_to_plot
 
     # Plot the data
     df2_filtered.plot(column=column_to_plot, 

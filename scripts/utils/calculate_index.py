@@ -402,7 +402,7 @@ def calculate_equal_weighted_index(df):
         (1 * (df[built_adjusted_col] * df[governance_col])) +
         (1 * (df[natural_adjusted_col] * df[governance_col]))
     )
-    df['calcrai_weighted'] = weighting
+    df['calcrai_equal_weighted'] = weighting
 
     # divide by climate domain
     df['calcrai_score'] = df['calcrai_weighted'] / df['climate_risk']
