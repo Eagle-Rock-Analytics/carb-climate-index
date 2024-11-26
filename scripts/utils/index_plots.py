@@ -214,11 +214,11 @@ def plot_climate_domains(df, column_to_plot, domain='', savefig=False):
         sm = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=0, vmax=1))
         sm._A = []  # Required for the ScalarMappable
         cbar = fig.colorbar(sm, cax=cbar_ax, orientation='horizontal')
-        cbar.set_label('Resilience', fontsize=10)
+        cbar.set_label('Exposure + Loss', fontsize=10)
 
         # Set title
         formatted_domain = domain.replace('_', ' ').title()
-        ax.set_title(f'{formatted_domain} Risk Domain', fontsize=16.5)
+        ax.set_title(f'{formatted_domain} Hazard Score', fontsize=16.5)
 
         # Display the plot
         plt.show()
