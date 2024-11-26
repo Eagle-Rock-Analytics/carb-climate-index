@@ -405,7 +405,7 @@ def calculate_equal_weighted_index(df):
     df['calcrai_equal_weighted'] = weighting
 
     # divide by climate domain
-    df['calcrai_score'] = df['calcrai_weighted'] / df['climate_risk']
+    df['calcrai_score'] = df['calcrai_equal_weighted'] / df['climate_risk']
 
     # testing for 0 values --> divide error
     df.loc[df['climate_risk'] == 0, 'calcrai_score'] = 0
