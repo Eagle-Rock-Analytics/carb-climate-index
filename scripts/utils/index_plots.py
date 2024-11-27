@@ -113,7 +113,8 @@ def index_plot(df, column, scenario=None, plot_title=False, save_name=None, plot
     if plot_type == 'discrete':
         # For discrete values (1-5), use discrete colormap
         df2.plot(column=column, ax=ax, legend=True, cmap='YlGnBu', categorical=True)
-        ax.get_legend().set_title("Cal-CRAI Resiliency Percentiles")
+        ax.get_legend().set_title("Composite Resilience")
+
     else:
         # For continuous values, use continuous colormap
         sm = df2.plot(column=column, ax=ax, vmin=vmin, vmax=vmax, cmap='bwr_r', legend=False)
