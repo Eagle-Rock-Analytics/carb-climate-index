@@ -401,13 +401,13 @@ def calculate_equal_weighted_index(df):
         (1 * (df[built_adjusted_col] * df[governance_col])) +
         (1 * (df[natural_adjusted_col] * df[governance_col]))
     )
-    df['calcrai_equal_weighted_numerator'] = weighting
+    df['community_capacity'] = weighting
 
     # divide by climate domain
-    df['calcrai_score'] = df['calcrai_equal_weighted_numerator'] / df['climate_risk']
+    df['calcrai_score'] = df['community_capacity'] / df['hazard_score']
 
     # testing for 0 values --> divide error
-    df.loc[df['climate_risk'] == 0, 'calcrai_score'] = 0
+    df.loc[df['hazard_score'] == 0, 'calcrai_score'] = 0
     
     return df
 
