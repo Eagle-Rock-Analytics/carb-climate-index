@@ -138,7 +138,29 @@ def index_plot(df, column, scenario=None, plot_title=False, save_name=None, plot
     plt.show()  # Show the plot
 
 def index_domain_plot(df, scenario=None, society=1, built=1, natural=1, save=False):
-    '''Produces subplots of the Cal-CRAI index value and the corresponding domains'''
+    '''
+    Produces subplots of the Cal-CRAI index value and the corresponding domains, primarily used in early
+    development for dummy data.
+
+    Parameters
+    ----------
+    df : DataFrame
+        input Dataframe
+    scenario : str
+        annotates the resulting figure, default is 'Equal Weighted Scenario' 
+    society : int
+        adjusts the weighting for society domain coefficient value in the Cal-CRAI calculation
+        default is 1
+    built : int
+        adjusts the weighting for built environment domain coefficient value in the Cal-CRAI calculation
+        default is 1
+    natural : int
+        adjusts the weighting for natural systems domain coefficient value in the Cal-CRAI calculation
+        default is 1
+    save : bool
+        if True, saves the figure as 'dummy_ca_domains_map.png' locally
+        default is False
+    '''
     # internally weight domains
     df = domain_plot_weighting(df, society, built, natural)
     
@@ -175,8 +197,7 @@ def index_domain_plot(df, scenario=None, society=1, built=1, natural=1, save=Fal
 
 def plot_climate_domains(df, column_to_plot, domain='', savefig=False):
     '''
-    Maps climate domain scores that contain the product values from summed risk and 
-    exposure indicators per climate risk scenario.
+    Maps climate hazard scores from any given climate risk scenario. The hazard scores are used in the denominator in the Cal-CRAI calculation.
     
     Parameters
     ----------
@@ -231,26 +252,37 @@ def plot_climate_domains(df, column_to_plot, domain='', savefig=False):
             print('Figure exported!')
 
 def domain_plot_weighting(df, society, built, natural):
-    '''In order to visualize the importance of weighting each domain'''
+    '''
+    In order to visualize the importance of weighting each domain, used in the dummy data calculation
+    '''
     df['DUMMY_society_tract_adjusted'] = df['DUMMY_society_tract_adjusted'] * society
     df['DUMMY_built_tract_adjusted'] = df['DUMMY_built_tract_adjusted'] * built
     df['DUMMY_natural_tract_adjusted'] = df['DUMMY_natural_tract_adjusted'] * natural
     return df
 
-def plot_domain(gdf, domain, savefig=False):
+def plot_domain(gdf, domain, column_to_plot, savefig=False):
+    '''
+    Generates a simple map depicting domain scores for each of the core domains (society & economy, built environment, governance, and natural systems).
+    
+    Parameters
+    ----------
+    gdf : GeoDataFrame
+        input GeoDataframe
+    domain : str
+        name of the core domain being plotted, which will influence plot title and save name
+    column_to_plot : str
+        name of the column to plot
+    savefig : bool
+        if True, saves figure locally
+        Default is False
+    '''
+
     # check for invalid geometries
     if len(gdf) == 0:
         print('No valid geometries. Cannot plot.')
     else:
         # Set up the figure
         fig, ax = plt.subplots(1, 1, figsize=(5, 8), layout='compressed')
-
-        # Define the column to plot
-        column_to_plot = f'summed_indicators_{domain}domain_min_max_standardized'
-
-        # Check if the alternative column exists in the GeoDataFrame
-        if 'all_domain_loss_exposure_product_min_max_standardized' in gdf.columns:
-            column_to_plot = 'all_domain_loss_exposure_product_min_max_standardized'
 
         # Plot the data
         plot = gdf.plot(column=column_to_plot, 
