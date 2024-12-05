@@ -112,7 +112,7 @@ def indicator_dicts(domain):
                                     'fuel_reduction'
                                     ],
 
-            'natural_resource_conservation' :  ['timber_management'
+            'natural_resource_conservation' :  ['timber_management',
                                                 'sampled_wells'
                                             ]}
     metric_to_indicator_climate_dict = {
