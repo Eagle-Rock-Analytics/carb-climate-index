@@ -7,7 +7,7 @@ from shapely.geometry import box # type: ignore
 
 census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/"
 ca_boundaries = gpd.read_file(census_shp_dir)
-
+ 
 # Dictionary mapping county codes to labels
 def _id_county_label(county_code, label):
     county_labels = {
@@ -71,7 +71,14 @@ def _id_county_label(county_code, label):
         '115': 'Yuba'
     }
  
-def index_plot(df, column, scenario=None, plot_title=False, save_name=None, plot_type='continuous', vmin=-3, vmax=3):
+def index_plot(df, 
+               column, 
+               scenario=None, 
+               plot_title=False, 
+               save_name=None, 
+               plot_type='continuous', 
+               vmin=-3, 
+               vmax=3):
     '''
     Maps the Cal-CRAI index for the entire state, can do descrete or continuous mapping
     depending on input column. 
@@ -137,7 +144,7 @@ def index_plot(df, column, scenario=None, plot_title=False, save_name=None, plot
 
     plt.show()  # Show the plot
 
-def index_domain_plot(df, scenario=None, society=1, built=1, natural=1, save=False):
+#def index_domain_plot(df, scenario=None, society=1, built=1, natural=1, save=False):
     '''
     Produces subplots of the Cal-CRAI index value and the corresponding domains, primarily used in early
     development for dummy data.
@@ -195,7 +202,10 @@ def index_domain_plot(df, scenario=None, society=1, built=1, natural=1, save=Fal
     if save:
         fig.savefig('dummy_ca_domains_map.png', dpi=300, bbox_inches='tight') ## need to replace fig name once data repo completed
 
-def plot_climate_domains(df, column_to_plot, domain='', savefig=False):
+def plot_hazard_score(df, 
+                      column_to_plot, 
+                      domain='', 
+                      savefig=False):
     '''
     Maps climate hazard scores from any given climate risk scenario. The hazard scores are used in the denominator in the Cal-CRAI calculation.
     
@@ -206,7 +216,7 @@ def plot_climate_domains(df, column_to_plot, domain='', savefig=False):
     column_to_plot : str
         df's climate domain score column
     domain : str
-        domain name, will go as the figre title
+        domain name, will go as the figure title
     savefig : bool
         if True, saves figure using the domain name as the save name
         Default is False
@@ -251,16 +261,10 @@ def plot_climate_domains(df, column_to_plot, domain='', savefig=False):
             fig.savefig(f'{figname}.png', format='png', dpi=300, bbox_inches='tight')
             print('Figure exported!')
 
-def domain_plot_weighting(df, society, built, natural):
-    '''
-    In order to visualize the importance of weighting each domain, used in the dummy data calculation
-    '''
-    df['DUMMY_society_tract_adjusted'] = df['DUMMY_society_tract_adjusted'] * society
-    df['DUMMY_built_tract_adjusted'] = df['DUMMY_built_tract_adjusted'] * built
-    df['DUMMY_natural_tract_adjusted'] = df['DUMMY_natural_tract_adjusted'] * natural
-    return df
-
-def plot_domain(gdf, domain, column_to_plot, savefig=False):
+def plot_domain_score(gdf, 
+                domain, 
+                column_to_plot, 
+                savefig=False):
     '''
     Generates a simple map depicting domain scores for each of the core domains (society & economy, built environment, governance, and natural systems).
     
