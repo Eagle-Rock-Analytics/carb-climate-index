@@ -345,9 +345,9 @@ def weight_domains(df, society, built, natural):
     natural: int
         Weighting modifier for natural domain
     '''
-    governance_col = 'governance_domain_index'
+    governance_col = 'governance_domain_score'
     society_adjusted_col = 'society_economy_tract_adjusted'
-    built_adjusted_col = 'built_tract_adjusted'
+    built_adjusted_col = 'built_environment_tract_adjusted'
     natural_adjusted_col = 'natural_systems_tract_adjusted' 
 
     weighting = (
@@ -357,7 +357,7 @@ def weight_domains(df, society, built, natural):
         (natural * (df[natural_adjusted_col] * df[governance_col]))
     )
 
-    df['calcrai_weighted'] = weighting
+    df['weighted_community_capacity'] = weighting
     return df
 
 def calculate_weighted_index(df, climate_column):
@@ -373,7 +373,7 @@ def calculate_weighted_index(df, climate_column):
         Climate column residing within the input df, it is the denominator of the Cal-CRAI calculation
     '''
     # divide by climate domain
-    df['calcrai_score'] = df['calcrai_weighted'] / df[climate_column]
+    df['calcrai_score'] = df['weighted_community_capacity'] / df[climate_column]
 
     # testing for 0 values --> divide error
     df.loc[df[climate_column] == 0, 'calcrai_score'] = 0
