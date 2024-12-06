@@ -390,9 +390,9 @@ def calculate_equal_weighted_index(df):
     df: DataFrame
         Input dataframe  
     '''
-    governance_col = 'governance_domain_index'
+    governance_col = 'governance_domain_score'
     society_adjusted_col = 'society_economy_tract_adjusted'
-    built_adjusted_col = 'built_tract_adjusted'
+    built_adjusted_col = 'built_environment_tract_adjusted'
     natural_adjusted_col = 'natural_systems_tract_adjusted' 
 
     weighting = (
@@ -404,10 +404,10 @@ def calculate_equal_weighted_index(df):
     df['calcrai_equal_weighted'] = weighting
 
     # divide by climate domain
-    df['calcrai_score'] = df['calcrai_equal_weighted'] / df['climate_risk']
+    df['calcrai_score'] = df['calcrai_equal_weighted'] / df['hazard_score']
 
     # testing for 0 values --> divide error
-    df.loc[df['climate_risk'] == 0, 'calcrai_score'] = 0
+    df.loc[df['hazard_score'] == 0, 'calcrai_score'] = 0
     
     return df
 
