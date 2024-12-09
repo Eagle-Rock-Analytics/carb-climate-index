@@ -205,9 +205,9 @@ def plot_hazard_score(df,
             print('Figure exported!')
 
 def plot_domain_score(df, 
-                domain, 
-                column_to_plot, 
-                savefig=False):
+                      domain, 
+                      column_to_plot, 
+                      savefig=False):
     '''
     Generates a simple map depicting domain scores for each of the core domains (society & economy, built environment, governance, and natural systems).
     
