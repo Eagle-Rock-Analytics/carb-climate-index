@@ -277,29 +277,34 @@ def plot_region_domain(df,
     -----------
     df : DataFrame
         A DataFrame containing the data you want to plot, which must include the column 'GEOID' to match with the census tract data.
-    
     counties_to_plot : list of str, optional
         A list of county FIPS codes (as strings) to plot. If None, no counties will be plotted.
         Example: ['037', '071', '065', '029', '111'].
-    
     region : str, optional
         A predefined region to plot. Options: 'bay_area', 'central_region', 'inland_deserts', 'north_central', 'northern', or 'south_coast'.
         If specified, this will override `counties_to_plot`.
-    
     plot_all : bool, optional
         If True, plots all counties in California. Overrides `counties_to_plot` and `region`.
-    
     savefig : bool, optional
         If True, the plot will be saved as a PNG file. Default is False.
-
     font_color : str, optional
         Color of the font for county labels. Default is 'black'.
-
     domain : str, optional
         The domain name used for labeling and column names. Default is 'society_economy_'.
-
     domain_label_map : dict, optional
         A dictionary to map the domain variable to a more readable label. Example: {'society_economy_': 'Society and Economy Domain'}
+    vmin : int, optional
+        set the minimum bounds of the color gradient
+        defualt is 0
+    vmax : int, optional
+        set the maximum bounds of the color gradient
+        default is 3
+    column_to_plot : str
+        name of the column to be plotted
+    cmap : str, optional
+        name of the cmap to be used, 'Greens' is the default
+    intro_title : str, optional
+        first portion of the figure title, default is 'Domain Score'
     
     Returns:
     --------
