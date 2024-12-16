@@ -411,28 +411,6 @@ def calculate_equal_weighted_index(df):
     
     return df
 
-def format_df(df):
-    '''
-    Minor clean-up of pandas df -- can be resolved in future version
-    Demo purposes only, at present
-
-    Parameters
-    ----------
-    df: DataFrame
-        Input dataframe  
-    '''
-    if "field_1" in df.columns:
-        df = df.drop(columns='field_1') # drops extra field
-        
-    df['GEOID'] = '0' + df['GEOID'] # formats GEOID column to match shapefile (has an extra 0 in front)
-
-    for i in df.columns:
-        exclude = ["geometry", "GEOID"]
-        if i not in exclude:
-            df[i] = df[i].astype(float) # changes type of core columns to float from string
-
-    return df
-
 def handle_outliers(df, domain_prefix, summary_stats=True, print_all_vals=False):
     '''
     Identifies 25th and 75th percentiles, then calculates the interquartile range
@@ -533,6 +511,7 @@ def min_max_standardize(df, cols_to_run_on, tolerance=1e-9):
         List of columns to calculate min, max, and standardize
     tolerance: float
         Tolerance value for checking if standardized values are within the [0, 1] range
+        Default is 1e-9
     '''
     all_good = True  # Flag to track if all columns are within range
 
@@ -665,6 +644,8 @@ def compute_summed_indicators(df, columns_to_sum, domain_prefix):
         Input DataFrame with indicators.
     columns_to_sum : list
         List of column names to sum.
+    domain_prefix : str
+        Adjusts the column name
     
     Returns
     -------
