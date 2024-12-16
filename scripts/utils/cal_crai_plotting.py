@@ -269,7 +269,8 @@ def plot_region_domain(df,
                        vmin=0, vmax=1, 
                        column_to_plot=None,
                        cmap = 'Greens',
-                       intro_title = 'Domain Score'):
+                       intro_title = 'Domain Score',
+                       legend_label = 'Community Capacity'):
     """
     Plots a domain score resilience for selected counties or regions, with the option to exclude features within a bounding box.
     
@@ -305,7 +306,10 @@ def plot_region_domain(df,
         name of the cmap to be used, 'Greens' is the default
     intro_title : str, optional
         first portion of the figure title, default is 'Domain Score'
-    
+    legend_label : str
+        name of the legend
+        default is 'Community Capacity'
+        
     Returns:
     --------
     None
@@ -420,7 +424,7 @@ def plot_region_domain(df,
                       vmin=vmin, vmax=vmax, 
                       legend=True, 
                       cmap=cmap, 
-                      legend_kwds={'label': 'Community Capacity', 'orientation': 'horizontal', 'shrink': 1.0, 'pad': 0.01})
+                      legend_kwds={'label': legend_label, 'orientation': 'horizontal', 'shrink': 1.0, 'pad': 0.01})
 
     # Suppress specific UserWarning messages
     warnings.filterwarnings("ignore", message="Geometry is in a geographic CRS. Results from 'area' are likely incorrect.")
