@@ -7,6 +7,37 @@ import zipfile
 import io
 import pandas as pd
 import os
+import shutil
+
+def delete_items(folders, csv_files):
+    """
+    Deletes the specified folders and CSV files if they exist.
+
+    Parameters:
+        folders (list): List of folder paths to delete.
+        csv_files (list): List of CSV file paths to delete.
+    """
+    # Delete folders
+    for folder in folders:
+        if os.path.exists(folder):
+            if os.path.isdir(folder):
+                shutil.rmtree(folder)
+                print(f"Deleted folder: {folder}")
+            else:
+                print(f"Path is not a folder: {folder}")
+        else:
+            print(f"Folder does not exist: {folder}")
+    
+    # Delete CSV files
+    for csv_file in csv_files:
+        if os.path.exists(csv_file):
+            if os.path.isfile(csv_file):
+                os.remove(csv_file)
+                print(f"Deleted file: {csv_file}")
+            else:
+                print(f"Path is not a file: {csv_file}")
+        else:
+            print(f"File does not exist: {csv_file}")
 
 def to_zarr(ds, top_dir, domain, indicator, data_source, save_name):
     """Converts netcdf to zarr and sends to s3 bucket"""

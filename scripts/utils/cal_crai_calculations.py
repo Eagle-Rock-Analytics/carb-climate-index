@@ -98,7 +98,7 @@ def indicator_dicts(domain):
                                     'police_officers',
                                     'registered_nurses'
                                     ],
-
+ 
             'personal_preparedness' : ['flood_policies',
                                         'mortgage',
                                         'prepared_for_general_disaster',
@@ -108,8 +108,7 @@ def indicator_dicts(domain):
 
             'community_preparedness' :  ['fuel_reduction',
                                     'nfip_participation',
-                                    'hazard_mitigation',
-                                    'fuel_reduction'
+                                    'hazard_mitigation'
                                     ],
 
             'natural_resource_conservation' :  ['timber_management',
