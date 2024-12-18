@@ -189,7 +189,7 @@ def plot_hazard_score(df,
         sm = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=0, vmax=1))
         sm._A = []  # Required for the ScalarMappable
         cbar = fig.colorbar(sm, cax=cbar_ax, orientation='horizontal')
-        cbar.set_label(u'Exposure \u00D7 Loss', fontsize=10)
+        cbar.set_label('Exposure + Loss', fontsize=10)
 
         # Set title
         formatted_domain = domain.replace('_', ' ').title()
