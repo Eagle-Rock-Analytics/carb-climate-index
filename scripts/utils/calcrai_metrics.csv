@@ -22,7 +22,7 @@ California State Water Resources Control Board,Wastewater treatments facilities,
 Cal-Adapt: Data catalog,Drought projections,Climate Risks,Drought exposure,"% change in the number of drought years classified as having Moderate, Severe, or Extreme drought conditions via SPEI",vulnerable,climate_drought_spei_metric.csv,Y,Y,"Beth McClenny
 Victoria Ford",climate_indicator_drought_exposure,,"Data resolution: 9km, run in pcluster"
 UNL Drought Monitor,drought monitor,Climate Risks,Drought exposure,average annual drought % coverage,vulnerable,climate_drought_coverage_metric.csv,Y,Y,Victoria Ford,climate_indicator_drought_exposure,,
-UNL Drought Monitor,drought monitor,Climate Risks,Drought exposure,total number of weeks in drought,vulnerable,climate_drought_total_weeks_metric.csv,Y,Y,Victoria Ford,climate_indicator_drought_exposure,,
+UNL Drought Monitor,drought monitor,Climate Risks,Drought exposure, percent of weeks in drought,vulnerable,climate_drought_total_weeks_metric.csv,Y,Y,Victoria Ford,climate_indicator_drought_exposure,,
 USDA Risk Management,Crop loss,Climate Risks,Drought loss,average # of acres lost from drought per year,vulnerable,climate_heat_crop_loss_acres_metric.csv,Y,Y,Victoria Ford,climate_indicator_drought_loss,,
 USDA Risk Management,Crop loss,Climate Risks,Drought loss,average cost of crop loss from drought per year,vulnerable,climate_heat_crop_loss_cost_metric.csv,Y,Y,Victoria Ford,climate_indicator_drought_loss,,
 Cal-Adapt: Data catalog,Surface runoff projections,Climate Risks,Flooding exposure,absolute change in 99th percentile surface runoff,vulnerable,climate_flood_exposure_surface_runoff_metric.csv,Y,Y,Victoria Ford,climate_indicator_flooding_exposure,,"Data resolution: 9km, run on AE Hub"

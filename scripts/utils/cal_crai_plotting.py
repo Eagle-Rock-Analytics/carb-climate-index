@@ -7,6 +7,7 @@ from shapely.geometry import box # type: ignore
 
 census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/"
 ca_boundaries = gpd.read_file(census_shp_dir)
+ca_boundaries['GEOID'] = ca_boundaries['GEOID'].astype(str)
 
 # Dictionary mapping county codes to labels
 def _id_county_label(county_code, label):
@@ -71,7 +72,14 @@ def _id_county_label(county_code, label):
         '115': 'Yuba'
     }
  
-def index_plot(df, column, scenario=None, plot_title=False, save_name=None, plot_type='continuous', vmin=-3, vmax=3):
+def index_plot(df, 
+               column, 
+               scenario=None, 
+               plot_title=False, 
+               save_name=None, 
+               plot_type='continuous', 
+               vmin=-3, 
+               vmax=3):
     '''
     Maps the Cal-CRAI index for the entire state, can do descrete or continuous mapping
     depending on input column. 
@@ -137,46 +145,12 @@ def index_plot(df, column, scenario=None, plot_title=False, save_name=None, plot
 
     plt.show()  # Show the plot
 
-def index_domain_plot(df, scenario=None, society=1, built=1, natural=1, save=False):
-    '''Produces subplots of the Cal-CRAI index value and the corresponding domains'''
-    # internally weight domains
-    df = domain_plot_weighting(df, society, built, natural)
-    
-    # plotting help
-    df2 = df.merge(ca_boundaries, on='GEOID')
-    df2['geometry'] = df2['geometry_y']
-    df2 = df2.drop(columns = ['geometry_x','geometry_y'])
-    df2 = gpd.GeoDataFrame(df2, geometry='geometry', crs=4269)
-
-    # set-up figure
-    fig, (ax1, ax2, ax3, ax4) = plt.subplots(ncols=4, sharex=True, sharey=True, figsize=(12,6), layout='compressed')
-    vmin=-3
-    vmax=3
-    dmin=-1
-    dmax=1
-    cm='YlGnBu'
-
-    df2.plot(ax=ax1, column='calcrai_score', vmin=vmin, vmax=vmax, legend=True, cmap=cm,
-             legend_kwds={'label':'Cal-CRAI Index value', 'orientation': 'horizontal', 'shrink':0.7});
-    df2.plot(ax=ax2, column='DUMMY_society_tract_adjusted', vmin=dmin, vmax=dmax, legend=True, cmap=cm,
-             legend_kwds={'label':'Society & Economy \ndomain weight', 'orientation': 'horizontal', 'shrink':0.7});
-    df2.plot(ax=ax3, column='DUMMY_natural_tract_adjusted', vmin=dmin, vmax=dmax, legend=True, cmap=cm,
-             legend_kwds={'label':'Natural Systems \ndomain weight', 'orientation': 'horizontal', 'shrink':0.7});
-    df2.plot(ax=ax4, column='DUMMY_built_tract_adjusted', vmin=dmin, vmax=dmax, legend=True, cmap=cm,
-             legend_kwds={'label':'Built Environment \ndomain weight', 'orientation': 'horizontal', 'shrink':0.7});
-
-    if scenario == None:
-        ax1.annotate('Equal-weighted domains'.format(scenario), xy=(0.02, 0.02), xycoords='axes fraction')
-    else: 
-        ax1.annotate('Weighting for {}'.format(scenario), xy=(0.02, 0.02), xycoords='axes fraction')
-
-    if save:
-        fig.savefig('dummy_ca_domains_map.png', dpi=300, bbox_inches='tight') ## need to replace fig name once data repo completed
-
-def plot_climate_domains(df, column_to_plot, domain='', savefig=False):
+def plot_hazard_score(df, 
+                      column_to_plot, 
+                      domain='', 
+                      savefig=False):
     '''
-    Maps climate domain scores that contain the product values from summed risk and 
-    exposure indicators per climate risk scenario.
+    Maps climate hazard scores from any given climate risk scenario. The hazard scores are used in the denominator in the Cal-CRAI calculation.
     
     Parameters
     ----------
@@ -185,7 +159,7 @@ def plot_climate_domains(df, column_to_plot, domain='', savefig=False):
     column_to_plot : str
         df's climate domain score column
     domain : str
-        domain name, will go as the figre title
+        domain name, will go as the figure title
     savefig : bool
         if True, saves figure using the domain name as the save name
         Default is False
@@ -215,7 +189,7 @@ def plot_climate_domains(df, column_to_plot, domain='', savefig=False):
         sm = plt.cm.ScalarMappable(cmap='Blues', norm=plt.Normalize(vmin=0, vmax=1))
         sm._A = []  # Required for the ScalarMappable
         cbar = fig.colorbar(sm, cax=cbar_ax, orientation='horizontal')
-        cbar.set_label('Exposure + Loss', fontsize=10)
+        cbar.set_label(u'Exposure \u00D7 Loss', fontsize=10)
 
         # Set title
         formatted_domain = domain.replace('_', ' ').title()
@@ -230,42 +204,52 @@ def plot_climate_domains(df, column_to_plot, domain='', savefig=False):
             fig.savefig(f'{figname}.png', format='png', dpi=300, bbox_inches='tight')
             print('Figure exported!')
 
-def domain_plot_weighting(df, society, built, natural):
-    '''In order to visualize the importance of weighting each domain'''
-    df['DUMMY_society_tract_adjusted'] = df['DUMMY_society_tract_adjusted'] * society
-    df['DUMMY_built_tract_adjusted'] = df['DUMMY_built_tract_adjusted'] * built
-    df['DUMMY_natural_tract_adjusted'] = df['DUMMY_natural_tract_adjusted'] * natural
-    return df
-
-def plot_domain(gdf, domain, savefig=False):
+def plot_domain_score(df, 
+                      domain, 
+                      column_to_plot, 
+                      savefig=False):
+    '''
+    Generates a simple map depicting domain scores for each of the core domains (society & economy, built environment, governance, and natural systems).
+    
+    Parameters
+    ----------
+    df : DataFrame
+        input Dataframe
+    domain : str
+        name of the core domain being plotted, which will influence plot title and save name
+    column_to_plot : str
+        name of the column to plot
+    savefig : bool
+        if True, saves figure locally
+        Default is False
+    '''
+    # Merge the passed DataFrame with the census boundary data
+    df2 = df.merge(ca_boundaries, on='GEOID')
+    
+    # Convert to GeoDataFrame with the correct CRS if necessary
+    df2_filtered = gpd.GeoDataFrame(df2, geometry='geometry', crs=4269)
+    
     # check for invalid geometries
-    if len(gdf) == 0:
+    if len(df2_filtered) == 0:
         print('No valid geometries. Cannot plot.')
     else:
         # Set up the figure
         fig, ax = plt.subplots(1, 1, figsize=(5, 8), layout='compressed')
 
-        # Define the column to plot
-        column_to_plot = f'summed_indicators_{domain}domain_min_max_standardized'
-
-        # Check if the alternative column exists in the GeoDataFrame
-        if 'all_domain_loss_exposure_product_min_max_standardized' in gdf.columns:
-            column_to_plot = 'all_domain_loss_exposure_product_min_max_standardized'
-
         # Plot the data
-        plot = gdf.plot(column=column_to_plot, 
+        plot = df2_filtered.plot(column=column_to_plot, 
                 ax=ax, 
                 vmin=0, vmax=1, 
                 legend=True, 
                 cmap='Greens',
-                legend_kwds={'label': 'Resilience (larger values are more resilient)', 'orientation': 'horizontal', 'shrink': 1.0, 'pad': 0.03})
+                legend_kwds={'label': 'Community Capacity', 'orientation': 'horizontal', 'shrink': 1.0, 'pad': 0.003})
         
         # Set title
         # Adjust the domain string to replace underscores with spaces and capitalize each word
         formatted_domain = domain.replace('_', ' ').title()
 
         # Set the plot title using the formatted domain string
-        ax.set_title(f'Cal-CRAI: {formatted_domain}Domain', fontsize=16.5)
+        ax.set_title(f'{formatted_domain}Domain Score', fontsize=16.5)
 
         # Display the plot
         plt.show()
@@ -276,7 +260,7 @@ def plot_domain(gdf, domain, savefig=False):
             fig.savefig(f'{figname}.png', format='png', dpi=300, bbox_inches='tight')
             print('Figure exported!')
 
-def plot_region_domain(gdf, 
+def plot_region_domain(df, 
                        counties_to_plot=None,
                        region=None, plot_all=False,
                        savefig=False, font_color='black',
@@ -285,38 +269,47 @@ def plot_region_domain(gdf,
                        vmin=0, vmax=1, 
                        column_to_plot=None,
                        cmap = 'Greens',
-                       intro_title = 'Resiliency Index'):
+                       intro_title = 'Domain Score',
+                       legend_label = 'Community Capacity'):
     """
     Plots a domain score resilience for selected counties or regions, with the option to exclude features within a bounding box.
     
     Parameters:
     -----------
-    gdf : GeoDataFrame
-        A GeoDataFrame containing the data you want to plot, which must include the column 'GEOID' to match with the census tract data.
-    
+    df : DataFrame
+        A DataFrame containing the data you want to plot, which must include the column 'GEOID' to match with the census tract data.
     counties_to_plot : list of str, optional
         A list of county FIPS codes (as strings) to plot. If None, no counties will be plotted.
         Example: ['037', '071', '065', '029', '111'].
-    
     region : str, optional
         A predefined region to plot. Options: 'bay_area', 'central_region', 'inland_deserts', 'north_central', 'northern', or 'south_coast'.
         If specified, this will override `counties_to_plot`.
-    
     plot_all : bool, optional
         If True, plots all counties in California. Overrides `counties_to_plot` and `region`.
-    
     savefig : bool, optional
         If True, the plot will be saved as a PNG file. Default is False.
-
     font_color : str, optional
         Color of the font for county labels. Default is 'black'.
-
     domain : str, optional
         The domain name used for labeling and column names. Default is 'society_economy_'.
-
     domain_label_map : dict, optional
         A dictionary to map the domain variable to a more readable label. Example: {'society_economy_': 'Society and Economy Domain'}
-    
+    vmin : int, optional
+        set the minimum bounds of the color gradient
+        defualt is 0
+    vmax : int, optional
+        set the maximum bounds of the color gradient
+        default is 3
+    column_to_plot : str
+        name of the column to be plotted
+    cmap : str, optional
+        name of the cmap to be used, 'Greens' is the default
+    intro_title : str, optional
+        first portion of the figure title, default is 'Domain Score'
+    legend_label : str
+        name of the legend
+        default is 'Community Capacity'
+        
     Returns:
     --------
     None
@@ -376,18 +369,13 @@ def plot_region_domain(gdf,
     else:
         title = f'{intro_title} of Selected Counties \n {domain_name}'
 
-    # Load the census tract data
-    census_shp_dir = "s3://ca-climate-index/0_map_data/2021_tiger_census_tract/2021_ca_tract/"
-    ca_boundaries = gpd.read_file(census_shp_dir)
-    ca_boundaries['GEOID'] = ca_boundaries['GEOID'].astype(str)
-    
-    # Merge the passed GeoDataFrame with the census boundary data
-    df2 = gdf.merge(ca_boundaries, on='GEOID')
+    # Merge the passed DataFrame with the census boundary data
+    df2 = df.merge(ca_boundaries, on='GEOID')
 
     # Filter rows where COUNTYFP is in the `counties_to_plot` list
     df2_filtered = df2[df2['COUNTYFP'].isin(counties_to_plot)]
 
-    # Convert to GeoDataFrame with the correct CRS if necessary
+    # Convert to DataFrame with the correct CRS if necessary
     df2_filtered = gpd.GeoDataFrame(df2_filtered, geometry='geometry', crs=4269)
 
     # Define the bounding box to exclude (xmin, ymin, xmax, ymax)
@@ -430,20 +418,13 @@ def plot_region_domain(gdf,
     # Plot county boundaries
     county_boundaries.boundary.plot(ax=ax, linewidth=0.55, edgecolor='black')
 
-    # Define the column to plot
-    if column_to_plot == None:
-        column_to_plot = f'summed_indicators_{domain}domain_min_max_standardized'
-    else:
-        column_to_plot = column_to_plot
-
     # Plot the data
     df2_filtered.plot(column=column_to_plot, 
                       ax=ax, 
                       vmin=vmin, vmax=vmax, 
                       legend=True, 
                       cmap=cmap, 
-                      legend_kwds={'label': f'{intro_title} (larger values are more resilient)', 'orientation': 'horizontal', 'shrink': 0.9,
-                                   'shrink': 1.0, 'pad': 0.04})
+                      legend_kwds={'label': legend_label, 'orientation': 'horizontal', 'shrink': 1.0, 'pad': 0.01})
 
     # Suppress specific UserWarning messages
     warnings.filterwarnings("ignore", message="Geometry is in a geographic CRS. Results from 'area' are likely incorrect.")
@@ -488,63 +469,3 @@ def plot_region_domain(gdf,
 
     # Display the plot
     plt.show()
-
-    def index_weighting_plot_ranking(df, ca_boundaries, save=False):
-        '''
-        Creates ranking plots (1-5) with distinct colors for each scenario in the provided dataframe.
-        '''
-        # Automatically detect score columns by excluding 'GEOID'
-        score_columns = [col for col in df.columns if col != 'GEOID']
-
-        # Ensure score columns are numeric, converting errors to NaN
-        df[score_columns] = df[score_columns].apply(pd.to_numeric, errors='coerce')
-
-        # Fill NaN values with -inf to ensure they are ranked lowest
-        df[score_columns] = df[score_columns].fillna(-np.inf)
-
-        # Generate a color map for the scenarios
-        scenario_colors = dict(zip(score_columns, plt.cm.Set1.colors[:len(score_columns)]))
-
-        # Prepare the dataframe for ranking by calculating ranks within each row
-        rank_df = df[['GEOID']].copy()
-        rank_df[score_columns] = df[score_columns]
-
-        # Sort each row’s values and get the top 5 columns for each GEOID
-        ranked_columns = rank_df[score_columns].apply(lambda x: x.nlargest(5).index.tolist(), axis=1)
-        ranked_scores = rank_df[score_columns].apply(lambda x: x.nlargest(5).tolist(), axis=1)
-            
-        # Create columns for each rank's scenario and score
-        for i in range(5):
-            rank_df.loc[:, f'rank_{i+1}_scenario'] = [col[i] for col in ranked_columns]
-            rank_df.loc[:, f'rank_{i+1}_score'] = [score[i] for score in ranked_scores]
-
-        # Merge with California boundaries for plotting
-        df2 = rank_df.merge(ca_boundaries, on='GEOID')
-        df2 = gpd.GeoDataFrame(df2, geometry='geometry', crs=4269)
-
-        # Generate and save ranking plots (1-5)
-        for rank in range(1, 6):
-            fig, ax = plt.subplots(1, 1, figsize=(6, 8))
-
-            # Prepare a column that assigns color based on the scenario for the current rank
-            df2['color'] = df2[f'rank_{rank}_scenario'].map(scenario_colors)
-
-            # Plot each geometry with its assigned color, suppressing the legend
-            df2.plot(ax=ax, color=df2['color'], edgecolor='k', legend=False)
-
-            # Manually create custom legend to avoid unwanted entries
-            handles = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=color, markersize=8)
-                    for color in scenario_colors.values()]
-            labels = scenario_colors.keys()
-
-            # Only add a legend if there are labels to show
-            if labels:
-                ax.legend(handles, labels, title=f'Rank {rank} Scenario', loc='upper left')
-
-            plt.annotate(f'Rank {rank} Cal-CRAI Index by Scenario', xy=(0.02, 0.02), xycoords='axes fraction')
-
-            # Save the figure if required
-            if save:
-                fig.savefig(f'rank_{rank}_crai_index.png', dpi=300, bbox_inches='tight')
-
-        plt.show()

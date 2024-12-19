@@ -7,7 +7,77 @@ import zipfile
 import io
 import pandas as pd
 import os
+import shutil
 
+def delete_items(folders, csv_files, zip_files=None, gdb_folders=None, png_files=None):
+    """
+    Deletes the specified folders, CSV files, ZIP files, GDB folders, and PNG files if they exist.
+
+    Parameters:
+        folders (list): List of folder paths to delete.
+        csv_files (list): List of CSV file paths to delete.
+        zip_files (list, optional): List of ZIP file paths to delete. Default is None.
+        gdb_folders (list, optional): List of GDB folder paths to delete. Default is None.
+        png_files (list, optional): List of PNG file paths to delete. Default is None.
+    """
+    # Delete folders
+    for folder in folders:
+        if os.path.exists(folder):
+            if os.path.isdir(folder):
+                shutil.rmtree(folder)
+                print(f"Deleted folder: {folder}")
+            else:
+                print(f"Path is not a folder: {folder}")
+        else:
+            print(f"Folder does not exist: {folder}")
+    
+    # Delete CSV files
+    for csv_file in csv_files:
+        if os.path.exists(csv_file):
+            if os.path.isfile(csv_file):
+                os.remove(csv_file)
+                print(f"Deleted file: {csv_file}")
+            else:
+                print(f"Path is not a file: {csv_file}")
+        else:
+            print(f"File does not exist: {csv_file}")
+    
+    # Delete ZIP files
+    if zip_files:
+        for zip_file in zip_files:
+            if os.path.exists(zip_file):
+                if os.path.isfile(zip_file) and zip_file.endswith('.zip'):
+                    os.remove(zip_file)
+                    print(f"Deleted ZIP file: {zip_file}")
+                else:
+                    print(f"Path is not a valid ZIP file: {zip_file}")
+            else:
+                print(f"ZIP file does not exist: {zip_file}")
+    
+    # Delete GDB folders
+    if gdb_folders:
+        for gdb_folder in gdb_folders:
+            if os.path.exists(gdb_folder):
+                if os.path.isdir(gdb_folder) and gdb_folder.endswith('.gdb'):
+                    shutil.rmtree(gdb_folder)
+                    print(f"Deleted GDB folder: {gdb_folder}")
+                else:
+                    print(f"Path is not a valid GDB folder: {gdb_folder}")
+            else:
+                print(f"GDB folder does not exist: {gdb_folder}")
+    
+    # Delete PNG files
+    if png_files:
+        for png_file in png_files:
+            if os.path.exists(png_file):
+                if os.path.isfile(png_file) and png_file.endswith('.png'):
+                    os.remove(png_file)
+                    print(f"Deleted PNG file: {png_file}")
+                else:
+                    print(f"Path is not a valid PNG file: {png_file}")
+            else:
+                print(f"PNG file does not exist: {png_file}")
+                
 def to_zarr(ds, top_dir, domain, indicator, data_source, save_name):
     """Converts netcdf to zarr and sends to s3 bucket"""
     # first check that folder is not already available
@@ -25,7 +95,6 @@ def list_webdir(url, ext=''):
     page = requests.get(url).text
     soup = BeautifulSoup(page, 'html.parser')
     return [url + '/' + node.get('href') for node in soup.find_all('a') if node.get('href').endswith(ext)]
-
 
 def pull_csv_from_directory(bucket_name, directory, output_folder, search_zipped=True, print_name=True):
     """
@@ -138,7 +207,6 @@ def pull_nc_from_directory(file_to_grab, filename):
     s3.download_file("ca-climate-index", file_to_grab, filename)
     print(f'{file_to_grab} downloaded!')
 
-
 def upload_csv_aws(file_names, bucket_name, directory):
     """
     Uploads CSV files to a specified directory in an S3 bucket.
@@ -197,7 +265,6 @@ def filter_counties(df, county_column, county_list=None):
     
     return filtered_df, omitted_df
 
-# helper function to identify data min/maxes
 def data_stats_check(df, col):
     print('Calculating stats on {}...'.format(col))
     print('Data min: ', df[col].min())
