@@ -98,7 +98,7 @@ def indicator_dicts(domain):
                                     'police_officers',
                                     'registered_nurses'
                                     ],
-
+  
             'personal_preparedness' : ['flood_policies',
                                         'mortgage',
                                         'prepared_for_general_disaster',
@@ -106,10 +106,9 @@ def indicator_dicts(domain):
                                         'prepared_without_water'
                                     ],
 
-            'community_preparedness' :  ['fuel_reduction',
+            'community_preparedness' :  ['emergency_management',
                                     'nfip_participation',
-                                    'hazard_mitigation',
-                                    'fuel_reduction'
+                                    'hazard_mitigation'
                                     ],
 
             'natural_resource_conservation' :  ['timber_management',
@@ -127,10 +126,10 @@ def indicator_dicts(domain):
                                     'mean_change_annual_warm_nights',
                                     'median_heat_warning_days',
                                     'slr_vulnerability_delta_percentage_change',
-                                    'slr_fire_stations_count_metric',
-                                    'slr_police_stations_count_metric',
-                                    'slr_schools_count_metric',
-                                    'slr_hospitals_count_metric',
+                                    'fire_stations_count_diff',
+                                    'police_stations_count_diff',
+                                    'schools_count_diff',
+                                    'hospitals_count_diff',
                                     'slr_vulnerable_wastewater_treatment_count',
                                     'building_exposed_slr_count',
                                     'slr_vulnerable_building_content_cost',
@@ -379,7 +378,7 @@ def calculate_weighted_index(df, climate_column):
     df.loc[df[climate_column] == 0, 'calcrai_score'] = 0
     
     return df
-
+ 
 def calculate_equal_weighted_index(df):
     '''
     Calculates the equally weighted scenario for the Cal-CRAI with each domain coefficient
@@ -549,7 +548,7 @@ def min_max_standardize(df, cols_to_run_on, tolerance=1e-9):
 
     return df
 
-def compute_averaged_indicators(df, metric_to_indicator_dict):
+def compute_averaged_indicators(df, metric_to_indicator_dict, print_summary=False):
     '''
     Computes the average of selected columns based on keywords for each indicator in the dictionary
     and stores the result in a new DataFrame.
@@ -560,6 +559,10 @@ def compute_averaged_indicators(df, metric_to_indicator_dict):
         Input DataFrame with standardized metrics.
     metric_to_indicator_dict : dict
         Dictionary where keys are indicator names and values are lists of keywords to match column names.
+    print_summary : bool, optional
+        If True, prints a summary of how many and which columns were used to calculate each indicator,
+        along with the values used for the first row.
+        Default is False
     
     Returns
     -------
@@ -569,6 +572,9 @@ def compute_averaged_indicators(df, metric_to_indicator_dict):
     
     # Create an empty DataFrame to store the results
     avg_indicator_metrics = pd.DataFrame()
+
+    # Create a variable to store the summary
+    summary = {}
 
     # Iterate through the items of the dictionary
     for indicator, keywords in metric_to_indicator_dict.items():
@@ -581,16 +587,30 @@ def compute_averaged_indicators(df, metric_to_indicator_dict):
         # Store the averaged values in the result DataFrame with the indicator name as the column name
         avg_indicator_metrics[indicator] = averaged_values
 
+        # Update the summary with the count and column names
+        summary[indicator] = {
+            'count': len(indicator_columns),
+            'columns': indicator_columns,
+            'first_row_values': df.loc[0, indicator_columns].to_dict() if indicator_columns else {}
+        }
+
     # Include the 'GEOID' column from the original DataFrame
     avg_indicator_metrics['GEOID'] = df['GEOID']
     
     # Reorder the columns to have 'GEOID' as the first column
     avg_indicator_metrics = avg_indicator_metrics[['GEOID'] + [col for col in avg_indicator_metrics.columns if col != 'GEOID']]
-    # print(avg_indicator_metrics)
-   
+    
+    # Print the summary if requested
+    if print_summary:
+        print("Indicator Summary:")
+        for indicator, details in summary.items():
+            print(f"{indicator}: {details['count']} columns used")
+            print(f"Columns: {details['columns']}")
+            print(f"First row values: {details['first_row_values']}\n")
+
     return avg_indicator_metrics
 
-def compute_summed_climate_indicators(df, metric_to_indicator_dict):
+def compute_summed_climate_indicators(df, metric_to_indicator_dict, print_summary=False):
     '''
     Computes the sum of columns grouped together based on keywords for 
     exposure or loss indicators within the climate domain using a dictionary,
@@ -609,6 +629,8 @@ def compute_summed_climate_indicators(df, metric_to_indicator_dict):
     DataFrame
         DataFrame with summed climate indicators and 'GEOID' column.
     '''
+    # Create a variable to store the summary
+    summary = {}
     
     # Create an empty DataFrame to store the results
     summed_indicator_metrics = pd.DataFrame()
@@ -623,6 +645,13 @@ def compute_summed_climate_indicators(df, metric_to_indicator_dict):
         
         # Store the summed values in the result DataFrame with the indicator name as the column name
         summed_indicator_metrics[indicator] = summed_values
+        
+                # Update the summary with the count and column names
+        summary[indicator] = {
+            'count': len(indicator_columns),
+            'columns': indicator_columns,
+            'first_row_values': df.loc[0, indicator_columns].to_dict() if indicator_columns else {}
+        }
 
     # Include the 'GEOID' column from the original DataFrame
     summed_indicator_metrics['GEOID'] = df['GEOID']
@@ -630,6 +659,14 @@ def compute_summed_climate_indicators(df, metric_to_indicator_dict):
     # Reorder the columns to have 'GEOID' as the first column
     summed_indicator_metrics = summed_indicator_metrics[['GEOID'] + [col for col in summed_indicator_metrics.columns if col != 'GEOID']]
     # print(avg_indicator_metrics)
+    
+    # Print the summary if requested
+    if print_summary:
+        print("Indicator Summary:")
+        for indicator, details in summary.items():
+            print(f"{indicator}: {details['count']} columns used")
+            print(f"Columns: {details['columns']}")
+            print(f"First row values: {details['first_row_values']}\n")
    
     return summed_indicator_metrics
 
