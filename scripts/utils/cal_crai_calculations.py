@@ -623,7 +623,10 @@ def compute_summed_climate_indicators(df, metric_to_indicator_dict, print_summar
     metric_to_indicator_dict : dict
         Dictionary where keys are indicator names and values
         are lists of keywords to match column names.
-    
+    print_summary : bool, optional
+        If True, prints a summary of how many and which columns were used to calculate each indicator,
+        along with the values used for the first row.
+        Default is False
     Returns
     -------
     DataFrame
