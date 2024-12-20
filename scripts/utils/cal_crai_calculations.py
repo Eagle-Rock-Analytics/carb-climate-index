@@ -744,14 +744,14 @@ def add_census_tracts(df):
 
     return gdf
 
-def domain_summary_stats(gdf, column):
+def domain_summary_stats(df, column):
     '''
     Merges the census tract boundaries to the processed dataframe.
     
     Parameters
     ----------
-    gdf : GeoDataFrame
-        Input GeoDataFrame following the merge withe census tract
+    df : DataFrame
+        Input DataFrame following the merge withe census tract
         geodataframe.
     column : str
         Name of the gdf domain score column you want stats for.
