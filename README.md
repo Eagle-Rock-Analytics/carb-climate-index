@@ -1,5 +1,7 @@
 # California Climate Risk and Adaptation Index
 
+The Cal-CRAI evaluates both community capacity—the ability to adapt to and recover from climate events—and hazard risk, which examines exposure to specific climate hazards such as wildfire, sea level rise, drought, extreme heat, and inland flooding, along with historical losses from these events. Using a comprehensive set of socioeconomic, built, and natural environment indicators, it generates a composite resilience index score that integrates these assessments.
+
 DOI: [![DOI:10.5281/zenodo.13840187](http://zenodo.org/badge/doi/10.5281/zenodo.13840187.svg)](https://doi.org/10.5281/zenodo.13840187) <br>
 Victoria Ford, Jesse Espinoza, Beth McClenny
 
