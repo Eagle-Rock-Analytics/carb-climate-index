@@ -171,15 +171,12 @@ def process_domain_csv_files(prefix, input_folder, output_folder, meta_csv, merg
     Parameters
     ----------
     prefix: str
-        Shared prefix for the desired domain csv files to call in:
-            'society_'
-            'built_'
-            'governance_'
-            'climate_'
+        Shared prefix for the desired domain csv files to call in, e.g., 'society_', 'built_', etc.
+        If left blank, processes all files ending with '_metric.csv'.
     input_folder: str
-        Name of the folder that is storing all metric csv files
+        Name of the folder that is storing all metric csv files.
     output_folder: str
-        Name of the folder to store pulled domain specific csv files.
+        Name of the folder to store pulled domain-specific csv files.
     meta_csv: str
         Local path to the metadata pipeline.
     merged_output_file: str
@@ -197,18 +194,18 @@ def process_domain_csv_files(prefix, input_folder, output_folder, meta_csv, merg
     metric_files = df[['Metric file name', 'High value result (vulnerable or resilient)']]
 
     # Dictionary to hold metric column names categorized by 'vulnerable' and 'resilient'
-    #global metric_vulnerable_resilient_dict
     metric_vulnerable_resilient_dict = {'vulnerable': [], 'resilient': []}
 
-
-    # Find all CSV files starting with the provided prefix in the input folder and matching the metric file names
-    source_files = [file for file in glob.glob(os.path.join(input_folder, f'{prefix}*.csv')) 
+    # Find all CSV files matching the provided prefix or ending with '_metric.csv' if prefix is blank
+    pattern = f'{prefix}*.csv' if prefix else '*_metric.csv'
+    source_files = [file for file in glob.glob(os.path.join(input_folder, pattern)) 
                     if os.path.basename(file) in metric_files['Metric file name'].values]
 
     # Iterate through the source files and process them
     for file in source_files:
         # Get the 'High value result (vulnerable or resilient)' entry for the current file
-        column_result = metric_files.loc[metric_files['Metric file name'] == os.path.basename(file), 'High value result (vulnerable or resilient)'].values[0]
+        column_result = metric_files.loc[metric_files['Metric file name'] == os.path.basename(file), 
+                                         'High value result (vulnerable or resilient)'].values[0]
 
         # Load the CSV file
         csv_df = pd.read_csv(file)
@@ -228,7 +225,7 @@ def process_domain_csv_files(prefix, input_folder, output_folder, meta_csv, merg
         # Remove the original file
         os.remove(file)
 
-    print(f"Processed and saved {len(source_files)} CSV files within {prefix}domain.")
+    print(f"Processed and saved {len(source_files)} CSV files within the '{prefix}' domain.")
 
     print('\nMetric resilience/vulnerable dictionary created and called: metric_vulnerable_resilient_dict')
 
@@ -245,7 +242,7 @@ def process_domain_csv_files(prefix, input_folder, output_folder, meta_csv, merg
         # Read the CSV file into a DataFrame
         df = pd.read_csv(file)
         
-        # Rename 'GEO_ID', 'tract', 'TRACT', 'Census_Tract', 'GEOID', 'USCB_GEOID' to 'GEOID' if they exist
+        # Rename possible variations of 'GEOID' to a consistent column name
         rename_cols = ['GEO_ID', 'GEOID', 'tract', 'TRACT', 'Census_Tract', 'census_tract', 'USCB_GEOID', 'Unnamed: 0']
         for col in rename_cols:
             if col in df.columns:
@@ -275,36 +272,20 @@ def process_domain_csv_files(prefix, input_folder, output_folder, meta_csv, merg
     # Check if all entries within the island tract are NaN
     island_row = merged_df.loc[merged_df['GEOID'] == island_tract]
     if island_row.iloc[:, 1:].isnull().all().all():
-        print('')
-        print(f"All entries within the island tract ({island_tract}) are NaN.")
+        print(f"\nAll entries within the island tract ({island_tract}) are NaN.")
     else:
-        print('')
-        print(f"Some entries within the island tract ({island_tract}) are not NaN.")
+        print(f"\nSome entries within the island tract ({island_tract}) are not NaN.")
 
+    # Add leading zeros to 'GEOID' and format correctly
     merged_df['GEOID'] = merged_df['GEOID'].apply(lambda x: '0' + str(x))
     merged_df['GEOID'] = merged_df['GEOID'].astype(str).apply(lambda x: x.rstrip('0').rstrip('.') if '.' in x else x)
 
-    # Selecting only numeric columns
-    numeric_df = merged_df.select_dtypes(include=[np.number])
-
-    # Counting infinite values
-    num_infinite = np.isinf(numeric_df).sum().sum()
-
-    print(f"\nNumber of infinite entries in the DataFrame: {num_infinite}")
-    print('Replacing infinite entries (if any) with NaN')
-
     # Replace infinite values with NaN
+    num_infinite = np.isinf(merged_df.select_dtypes(include=[np.number])).sum().sum()
+    print(f"\nNumber of infinite entries in the DataFrame: {num_infinite}")
+    print('Replacing infinite entries (if any) with NaN.')
     merged_df.replace([np.inf, -np.inf], np.nan, inplace=True)
 
-    # Selecting only numeric columns
-    numeric_df = merged_df.select_dtypes(include=[np.number])
-
-    # Counting infinite values after replacement
-    num_infinite = np.isinf(numeric_df).sum().sum()
-    print(f"Number of infinite entries in the DataFrame after replacement: {num_infinite}")
-
-    print(f"\nFile processing complete, dataframe will now be saved as a .csv")
-    
     # Save the merged DataFrame to a CSV file
     merged_df.to_csv(merged_output_file, index=False)
 
