@@ -469,3 +469,71 @@ def plot_region_domain(df,
 
     # Display the plot
     plt.show()
+    
+def missing_metrics_plot(df, 
+               column, 
+               plot_title=False,
+               title=None,
+               save_name=None, 
+               plot_type='discrete', 
+               vmin=-3, 
+               vmax=3):
+    '''
+    Maps binned missing metric percentage. 
+    
+    Parameters
+    ----------
+    df : DataFrame
+        input DataFrame
+    column : str
+        Missing metrics column to be plotted.
+    plot_title : bool
+        Default is False. If True, a title will be added to the plot.
+    save_name : str
+        Default is None. User can enter any string to save the figure as a PNG file.
+    plot_type : str
+        Specifies the type of mapping for the plot. 
+        - 'continuous': Uses a gradient to represent a smooth range of values.
+        - 'discrete': Uses distinct colors to represent the binned data.
+        Default is 'continuous'.
+    vmin : int
+        If plot is continuous, set the minimum bounds of the color gradient.
+        Default is -3.
+    vmax : int
+        If plot is continuous, set the maximum bounds of the color gradient.
+        Default is 3.
+    '''
+    # Merging with geographical boundaries
+    df2 = df.merge(ca_boundaries, on='GEOID')
+    df2['geometry'] = df2['geometry']
+    df2 = gpd.GeoDataFrame(df2, geometry='geometry', crs=4269)
+
+    # Set up figure
+    fig, ax = plt.subplots(1, 1, figsize=(4.5, 6), layout='compressed')
+
+    # Check plot type and set plotting parameters accordingly
+    if plot_type == 'discrete':
+        # For discrete values (1-5), use discrete colormap
+        df2.plot(column=column, ax=ax, legend=True, cmap='YlGnBu', categorical=True)
+        ax.get_legend().set_title("Missing Metric \n Percentage")
+
+    else:
+        # For continuous values, use continuous colormap
+        sm = df2.plot(column=column, ax=ax, vmin=vmin, vmax=vmax, cmap='bwr_r', legend=False)
+
+        # Create a colorbar manually and set the title
+        cbar = fig.colorbar(sm.collections[0], ax=ax, orientation='horizontal')
+        cbar.set_label("Percent Missing Metrics")
+
+    # Add a title if required
+    if plot_title:
+        ax.set_title(f'{title}', fontsize=16.5)
+
+    # Add annotation
+    #plt.annotate('Equal-weighted domains', xy=(0.02, 0.02), xycoords='axes fraction')
+
+    # Save figure if required
+    if save_name:
+        fig.savefig(f'{save_name}.png', dpi=300, bbox_inches='tight')  # Save the figure
+
+    plt.show()  # Show the plot
