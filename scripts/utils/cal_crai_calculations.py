@@ -739,3 +739,49 @@ def domain_summary_stats(df, column):
     '''
     print(f'Median {column} domain value: {gdf[column].median()}')
     print(f'Mean {column} domain value: {gdf[column].mean()}')
+
+def calculate_missing_percentage_and_columns(df, geoid_column='GEOID'):
+    """
+    Calculates the percentage of missing entries/metrics and lists missing column names for each GEOID in the given DataFrame.
+    
+    Parameters:
+    ----------
+    df : pd.DataFrame
+        The DataFrame containing the GEOID and other columns.
+    geoid_column : str
+        The name of the column representing GEOIDs.
+    
+    Returns:
+    -------
+    pd.DataFrame
+        A new DataFrame with GEOID, the percentage of missing entries, and a list of missing columns for each GEOID.
+    """
+    # Ensure the GEOID column exists in the DataFrame
+    if geoid_column not in df.columns:
+        raise ValueError(f"Column '{geoid_column}' not found in the DataFrame.")
+    
+    # Group by GEOID
+    grouped = df.groupby(geoid_column)
+
+    # Calculate missing percentage for each GEOID
+    missing_percentage = grouped.apply(
+        lambda g: g.drop(columns=[geoid_column], errors='ignore')  # Exclude the grouping column
+        .isnull().mean(axis=1).mean() * 100,
+        include_groups=False  # Exclude grouping columns during apply
+    )
+
+    # Identify missing columns for each GEOID
+    missing_columns = grouped.apply(
+        lambda g: g.drop(columns=[geoid_column], errors='ignore')  # Exclude the grouping column
+        .columns[g.isnull().any()].tolist(),
+        include_groups=False  # Exclude grouping columns during apply
+    )
+
+    # Create a new DataFrame with GEOID, missing percentage, and missing columns
+    result_df = pd.DataFrame({
+        geoid_column: missing_percentage.index,
+        'missing_percentage': missing_percentage.values,
+        'missing_columns': missing_columns.values
+    })
+    
+    return result_df
