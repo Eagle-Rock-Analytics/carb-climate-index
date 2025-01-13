@@ -8,7 +8,6 @@ This repository contains the code (via Jupyter Notebooks and scripts) associated
 * **data_pull**: Scripts to retrieve/scrape/manually upload datasets.
 * **data_subset**: Scripts to subset datasets to California domain, if necessary. Applicable for federal level scale datasets.
 * **data_reproject**: Scripts to reproject datasets to California domain, following ACS census tracts.
-* **data_reproject**: Scripts to calculate data metrics.
 * **index_method**: Scripts to calculate indicators, hazard scores, and Cal-CRAI.
 
 **History**<br>
