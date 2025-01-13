@@ -10,5 +10,6 @@ This repository contains the code (via Jupyter Notebooks and scripts) associated
 * **data_reproject**: Scripts to reproject datasets to California domain, following ACS census tracts.
 * **data_reproject**: Scripts to calculate data metrics.
 * **index_method**: Scripts to calculate indicators, hazard scores, and Cal-CRAI.
-  
-**v1.0.0** -- Released 12.19.2024
+
+**History**
+**v1.0.0** -- Cal-CRAI v1 metrics completed. Released 12.19.2024
