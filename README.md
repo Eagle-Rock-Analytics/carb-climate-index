@@ -11,5 +11,5 @@ This repository contains the code (via Jupyter Notebooks and scripts) associated
 * **data_reproject**: Scripts to calculate data metrics.
 * **index_method**: Scripts to calculate indicators, hazard scores, and Cal-CRAI.
 
-**History**
+**History**<br>
 **v1.0.0** -- Cal-CRAI v1 metrics completed. Released 12.19.2024
