@@ -765,16 +765,15 @@ def calculate_missing_percentage_and_columns(df, geoid_column='GEOID'):
 
     # Calculate missing percentage for each GEOID
     missing_percentage = grouped.apply(
-        lambda g: g.drop(columns=[geoid_column], errors='ignore')  # Exclude the grouping column
-        .isnull().mean(axis=1).mean() * 100,
-        include_groups=False  # Exclude grouping columns during apply
+        lambda g: g.drop(columns=[geoid_column], errors='ignore').isnull().mean(axis=1).mean() * 100
     )
 
     # Identify missing columns for each GEOID
     missing_columns = grouped.apply(
-        lambda g: g.drop(columns=[geoid_column], errors='ignore')  # Exclude the grouping column
-        .columns[g.isnull().any()].tolist(),
-        include_groups=False  # Exclude grouping columns during apply
+        lambda g: list(
+            g.drop(columns=[geoid_column], errors='ignore')
+            .columns[g.drop(columns=[geoid_column], errors='ignore').isnull().any()]
+        )
     )
 
     # Create a new DataFrame with GEOID, missing percentage, and missing columns
