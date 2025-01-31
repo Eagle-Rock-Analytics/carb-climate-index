@@ -617,3 +617,86 @@ def missing_metrics_plot(df,
         fig.savefig(f'{save_name}.png', dpi=300, bbox_inches='tight')  # Save the figure
 
     plt.show()  # Show the plot
+    
+def modular_plot(df, 
+            column, 
+            ax=None,
+            plot_title=None, 
+            cmap='Blues', 
+            vmin=None, 
+            vmax=None, 
+            set_legend=True, 
+            legend_position='upper right', 
+            legend_bbox=(1, 1), 
+            custom_text=None,
+            custom_text_x = -118.76,
+            custom_text_y = 33.7,
+            font_size=16, 
+            font_color='white', 
+            x_ticks=None, 
+            categorical=False,
+            exclude_box=(-119, 33, -118, 33.6),
+            cbar_label=None):
+    
+    # Check for invalid geometries
+    if len(df) == 0:
+        print('No valid geometries. Cannot plot.')
+        return
+
+    # Set up the figure and axis if not provided
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, figsize=(4.5, 6), layout='compressed')
+        created_fig = True
+    else:
+        created_fig = False
+
+    # Define the bounding box to exclude
+    exclusion_box = box(*exclude_box)
+    df = df[~df.intersects(exclusion_box)]    
+
+    # Plot the data
+    df.plot(column=column, 
+            ax=ax, 
+            cmap=cmap, 
+            vmin=vmin, 
+            vmax=vmax, 
+            legend=False if categorical else set_legend, 
+            categorical=categorical)
+
+    # Add legend or colorbar
+    if set_legend and not categorical:
+        cbar_ax = ax.figure.add_axes([0.065, 0.5401, 0.23, 0.01])
+        sm = plt.cm.ScalarMappable(cmap=cmap, norm=plt.Normalize(vmin=vmin, vmax=vmax))
+        sm._A = []
+        cbar = ax.figure.colorbar(sm, cax=cbar_ax, orientation='horizontal')
+        if cbar_label:
+            cbar.set_label(cbar_label, fontsize=10)
+    elif categorical and set_legend:
+        ax.legend(title="Composite Resilience", loc=legend_position, bbox_to_anchor=legend_bbox)
+
+    # Set plot title if provided
+    if plot_title:
+        ax.set_title(plot_title, fontsize=18)
+
+    # Add custom text annotation
+    if custom_text:
+        ax.text(custom_text_x, custom_text_y, custom_text, 
+                weight='medium', fontsize=font_size, color=font_color, 
+                ha='center', va='center', alpha=1)
+
+    # Customize tick parameters
+    ax.tick_params(axis='y', which='major', labelsize=12)
+    ax.tick_params(axis='y', which='minor', labelsize=12)
+    
+    if x_ticks:
+        xlim = ax.get_xlim()
+        buffer = (xlim[1] - xlim[0]) * 0.05
+        adjusted_xlim = (xlim[0] + buffer, xlim[1] - buffer)
+        tick_positions = np.linspace(adjusted_xlim[0], adjusted_xlim[1], x_ticks)
+        rounded_labels = [round(tick, 1) for tick in tick_positions]
+        ax.set_xticks(tick_positions)
+        ax.set_xticklabels(rounded_labels)
+
+    # Display the plot if a new figure was created
+    if created_fig:
+        plt.show()
