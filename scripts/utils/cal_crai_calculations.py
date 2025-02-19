@@ -725,13 +725,13 @@ def add_census_tracts(df):
 
     return gdf
 
-def domain_summary_stats(df, column):
+def domain_summary_stats(gdf, column):
     '''
     Merges the census tract boundaries to the processed dataframe.
     
     Parameters
     ----------
-    df : DataFrame
+    gdf : geopandas DataFrame
         Input DataFrame following the merge withe census tract
         geodataframe.
     column : str
