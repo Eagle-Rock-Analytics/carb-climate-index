@@ -1,5 +1,5 @@
 # California Climate Risk and Adaptation Index (Cal-CRAI)
-[![DOI:10.5281/zenodo.13840187](http://zenodo.org/badge/doi/10.5281/zenodo.13840187.svg)](https://doi.org/10.5281/zenodo.13840187) 
+[![DOI:10.5281/zenodo.13840187](http://zenodo.org/badge/doi/10.5281/zenodo.13840187.svg)](https://doi.org/10.5281/zenodo.13840187)
 <a href="https://www.f-uji.net/view/4090"><img src="https://www.f-uji.net/badge/plastic/4090" alt="FAIR level 2.25, score 70.83 (2025-07-16 17:36:49)"></a> <br>
 Victoria Ford, Jesse Espinoza, Beth McClenny
 
